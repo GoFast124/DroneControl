@@ -1,0 +1,104 @@
+:root {
+  --bg-0: #0a0e14;
+  --bg-1: #10151d;
+  --bg-2: #161d27;
+  --bg-3: #1e2733;
+  --border: #2a3441;
+  --text-0: #e8edf4;
+  --text-1: #9aa7b8;
+  --text-2: #64707f;
+  --accent: #3ecfff;
+  --accent-dim: #1c5b6e;
+  --good: #33d17a;
+  --warn: #f5b942;
+  --bad: #ef5757;
+  --mono: 'Cascadia Code', 'JetBrains Mono', Consolas, 'SF Mono', monospace;
+  --sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--sans);
+  font-size: 13px;
+  overflow: hidden;
+  user-select: none;
+}
+
+input,
+select,
+button,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input,
+textarea {
+  user-select: text;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wp-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f5b942;
+  border: 2px solid #0a0e14;
+  color: #0a0e14;
+  font: 700 12px/24px var(--sans);
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.wp-marker.selected {
+  background: #3ecfff;
+  box-shadow: 0 0 0 3px rgba(62, 207, 255, 0.45);
+}
+.wp-marker.current {
+  background: #33d17a;
+}
+.wp-marker.home {
+  background: #ef5757;
+  color: #fff;
+}
+
+/* Overlap tiles slightly so fractional display scaling (e.g. 125%) doesn't show seams. */
+.leaflet-container img.leaflet-tile {
+  width: 256.7px !important;
+  height: 256.7px !important;
+}
