@@ -8,6 +8,7 @@ import MissionView from './views/MissionView'
 import SetupView from './views/SetupView'
 import TuneView from './views/TuneView'
 import ConnectionModal from './components/ConnectionModal'
+import TrafficWatcher from './components/TrafficWatcher'
 
 export type ViewId = 'dashboard' | 'mission' | 'setup' | 'tuning' | 'parameters' | 'logs'
 
@@ -29,6 +30,7 @@ export default function App(): React.JSX.Element {
           {view === 'logs' && <LogsView />}
         </div>
       </div>
+      <TrafficWatcher />
       {connectionModalOpen && <ConnectionModal onClose={() => setConnectionModalOpen(false)} />}
     </div>
   )

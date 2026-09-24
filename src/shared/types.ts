@@ -146,7 +146,33 @@ export interface PidTuningData {
   timestamp: number
 }
 
+// Another aircraft, from the vehicle's ADS-B receiver (MAVLink ADSB_VEHICLE) or the optional online feed.
+export interface Aircraft {
+  id: string // ICAO 24-bit address, hex
+  callsign: string // empty if unknown
+  type: string // aircraft type code or emitter category, empty if unknown
+  lat: number
+  lon: number
+  altitude?: number // metres above mean sea level as reported (barometric where available)
+  onGround: boolean
+  heading?: number // degrees true, direction of travel
+  speed?: number // ground speed, m/s
+  climb?: number // m/s, positive up
+  source: 'vehicle' | 'online'
+  lastSeen: number // ms since epoch
+}
+
+export interface TrafficData {
+  aircraft: Aircraft[]
+  online: {
+    enabled: boolean
+    error?: string // last fetch problem, if any
+    updatedAt?: number
+  }
+}
+
 export interface TelemetryState {
+  traffic?: TrafficData
   navTarget?: { roll: number; pitch: number } // degrees, from NAV_CONTROLLER_OUTPUT
   pid?: Record<number, PidTuningData> // keyed by axis: 1 roll, 2 pitch, 3 yaw
   servoOutputs?: number[] // SERVO_OUTPUT_RAW, microseconds, index 0 = output 1
@@ -242,6 +268,7 @@ export const IPC = {
   getConnectionState: 'link:get-connection-state',
   requestParams: 'link:request-params',
   setParam: 'link:set-param',
+  setOnlineTraffic: 'traffic:set-online',
   getParams: 'link:get-params',
 
   onConnectionState: 'link:connection-state',

@@ -4,6 +4,7 @@ import HeadingRibbon from '../components/hud/HeadingRibbon'
 import ProximityRadar from '../components/hud/ProximityRadar'
 import MiniMap from '../components/hud/MiniMap'
 import StatCard from '../components/StatCard'
+import TrafficCard from '../components/TrafficCard'
 import FlightControls from '../components/FlightControls'
 import MessagesPanel from '../components/MessagesPanel'
 import { useConnection, useTelemetry } from '../store'
@@ -76,7 +77,7 @@ export default function Dashboard(): React.JSX.Element {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}>
         <StatCard
           title="Battery"
           rows={[
@@ -113,6 +114,7 @@ export default function Dashboard(): React.JSX.Element {
             { label: 'Climb', value: vfr ? `${vfr.climb.toFixed(1)} m/s` : '—' }
           ]}
         />
+        <TrafficCard />
       </div>
 
       <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 1100, alignItems: 'stretch', flexWrap: 'wrap' }}>

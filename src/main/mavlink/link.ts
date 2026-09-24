@@ -16,7 +16,9 @@ import {
   common,
   ardupilotmega
 } from 'node-mavlink'
+import { OnlineTrafficFeed, type FeedResult } from '../traffic/onlineFeed'
 import type {
+  Aircraft,
   AttitudeData,
   BatteryData,
   ConnectionConfig,
@@ -34,6 +36,7 @@ import type {
   SetupEvent,
   StatusMessage,
   TelemetryState,
+  TrafficData,
   VehicleCommand,
   VfrHudData
 } from '../../shared/types'
@@ -50,6 +53,13 @@ const REGISTRY: MavLinkPacketRegistry = {
 
 const MAV_MODE_FLAG_SAFETY_ARMED = 0x80
 const TELEMETRY_EMIT_MS = 33
+// Vehicle-reported aircraft that haven't been heard from for this long are dropped.
+const TRAFFIC_STALE_MS = 60_000
+// Short names for the ADS-B emitter category (MAVLink ADSB_EMITTER_TYPE).
+const EMITTER_TYPES: Record<number, string> = {
+  1: 'Light', 2: 'Small', 3: 'Large', 4: 'Large', 5: 'Heavy', 6: 'Aerobatic', 7: 'Helicopter', 9: 'Glider', 10: 'Balloon',
+  11: 'Parachute', 12: 'Ultralight', 14: 'UAV', 15: 'Space', 17: 'Ground vehicle', 18: 'Ground vehicle', 19: 'Obstacle'
+}
 
 const CMD_PREFLIGHT_CALIBRATION = 241
 const CMD_PREFLIGHT_REBOOT = 246
@@ -101,6 +111,17 @@ export class MavlinkLink extends EventEmitter {
   private paramTotal = 0
   private proximitySensors = new Map<string, DistanceSensorData>()
   private proximityScan: ObstacleScanData | undefined
+  private vehicleTraffic = new Map<string, Aircraft>()
+  private onlineTraffic: FeedResult = { aircraft: [] }
+  private onlineUpdatedAt: number | undefined
+  private onlineFeed = new OnlineTrafficFeed(
+    () => this.telemetry.globalPosition,
+    (result) => {
+      this.onlineTraffic = result
+      this.onlineUpdatedAt = Date.now()
+      this.emitTraffic()
+    }
+  )
   private telemetryTimer: NodeJS.Timeout | null = null
 
   private readonly mission = new MissionClient(
@@ -181,7 +202,9 @@ export class MavlinkLink extends EventEmitter {
     this.paramTotal = 0
     this.proximitySensors.clear()
     this.proximityScan = undefined
-    this.telemetry = { armed: false, flightMode: 'UNKNOWN' }
+    this.vehicleTraffic.clear()
+    this.onlineTraffic = { aircraft: [] }
+    this.telemetry = { armed: false, flightMode: 'UNKNOWN', traffic: this.trafficState() }
     if (this.connectionState.status !== 'disconnected') {
       this.setConnectionState({ status: 'disconnected' })
     }
@@ -608,6 +631,8 @@ export class MavlinkLink extends EventEmitter {
       this.handleDistanceSensor(data)
     } else if (data instanceof common.ObstacleDistance) {
       this.handleObstacleDistance(data)
+    } else if (data instanceof common.AdsbVehicle) {
+      this.handleAdsbVehicle(data)
     } else if (data instanceof common.MissionCurrent) {
       this.updateTelemetry({ missionCurrent: data.seq })
     } else if (data instanceof common.StatusText) {
@@ -627,6 +652,53 @@ export class MavlinkLink extends EventEmitter {
         this.emitGcsMessage(`${name} ${String(result).toLowerCase().replace(/_/g, ' ')} by vehicle`, 4)
       }
     }
+  }
+
+  // Turns the online feed on or off. The feed needs the vehicle's position, so it idles until there is one.
+  setOnlineTraffic(enabled: boolean): void {
+    if (enabled) this.onlineFeed.start()
+    else {
+      this.onlineFeed.stop()
+      this.onlineTraffic = { aircraft: [] }
+      this.onlineUpdatedAt = undefined
+    }
+    this.emitTraffic()
+  }
+
+  private handleAdsbVehicle(data: common.AdsbVehicle): void {
+    const flags = data.flags as number
+    if (!(flags & common.AdsbFlags.VALID_COORDS)) return
+    const now = Date.now()
+    const id = data.ICAOAddress.toString(16).padStart(6, '0')
+    const speed = flags & common.AdsbFlags.VALID_VELOCITY ? data.horVelocity / 100 : undefined
+    this.vehicleTraffic.set(id, {
+      id,
+      callsign: flags & common.AdsbFlags.VALID_CALLSIGN ? data.callsign.replace(/ +$/, '').trim() : '',
+      type: EMITTER_TYPES[data.emitterType as number] ?? '',
+      lat: data.lat / 1e7,
+      lon: data.lon / 1e7,
+      altitude: flags & common.AdsbFlags.VALID_ALTITUDE ? data.altitude / 1000 : undefined,
+      onGround: data.emitterType >= 17 && data.emitterType <= 18,
+      heading: flags & common.AdsbFlags.VALID_HEADING ? data.heading / 100 : undefined,
+      speed,
+      climb: flags & common.AdsbFlags.VERTICAL_VELOCITY_VALID ? data.verVelocity / 100 : undefined,
+      source: 'vehicle',
+      lastSeen: now - data.tslc * 1000
+    })
+    this.emitTraffic()
+  }
+
+  private trafficState(): TrafficData {
+    const now = Date.now()
+    for (const [id, a] of this.vehicleTraffic) if (now - a.lastSeen > TRAFFIC_STALE_MS) this.vehicleTraffic.delete(id)
+    // The vehicle's own receiver wins when both sources know the same aircraft.
+    const aircraft = [...this.vehicleTraffic.values()]
+    for (const a of this.onlineTraffic.aircraft) if (!this.vehicleTraffic.has(a.id)) aircraft.push(a)
+    return { aircraft, online: { enabled: this.onlineFeed.running, error: this.onlineTraffic.error, updatedAt: this.onlineUpdatedAt } }
+  }
+
+  private emitTraffic(): void {
+    this.updateTelemetry({ traffic: this.trafficState() })
   }
 
   private handleDistanceSensor(data: common.DistanceSensor): void {

@@ -22,6 +22,7 @@ const api = {
   getConnectionState: (): Promise<ConnectionState> => ipcRenderer.invoke(IPC.getConnectionState),
   requestParams: (): Promise<void> => ipcRenderer.invoke(IPC.requestParams),
   setParam: (id: string, value: number): Promise<void> => ipcRenderer.invoke(IPC.setParam, id, value),
+  setOnlineTraffic: (enabled: boolean): Promise<void> => ipcRenderer.invoke(IPC.setOnlineTraffic, enabled),
   getParams: (): Promise<ParamEntry[]> => ipcRenderer.invoke(IPC.getParams),
   missionDownload: (): Promise<{ home: MissionItem | null; items: MissionItem[] }> => ipcRenderer.invoke(IPC.missionDownload),
   missionUpload: (items: MissionItem[], home: MissionItem | null): Promise<void> =>

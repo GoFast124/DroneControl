@@ -99,6 +99,7 @@ app.whenReady().then(() => {
     await link.setParam(id, value)
   })
 
+  ipcMain.handle(IPC.setOnlineTraffic, (_event, enabled: boolean) => link.setOnlineTraffic(!!enabled))
   ipcMain.handle(IPC.getParams, () => link.getParams())
 
   createWindow()
