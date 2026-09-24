@@ -57,7 +57,7 @@ function arcPath(startDeg: number, endDeg: number, r: number): string {
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r.toFixed(1)} ${r.toFixed(1)} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`
 }
 
-export default function ProximityRadar(): React.JSX.Element {
+export default function ProximityRadar({ onHide }: { onHide: () => void }): React.JSX.Element {
   const telemetry = useTelemetry()
   const now = useNow(500)
   const [rangeSetting, setRangeSetting] = useState<'auto' | number>('auto')
@@ -233,6 +233,13 @@ export default function ProximityRadar(): React.JSX.Element {
             </option>
           ))}
         </select>
+        <button
+          onClick={onHide}
+          title="Hide the proximity radar"
+          style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', color: 'var(--text-1)' }}
+        >
+          Hide
+        </button>
       </div>
     </div>
   )

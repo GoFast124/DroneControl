@@ -34,6 +34,7 @@ function createWindow(): void {
   link.on('param-update', (param) => mainWindow.webContents.send(IPC.onParamUpdate, param))
   link.on('log', (entry) => mainWindow.webContents.send(IPC.onLog, entry))
   link.on('mission-progress', (p) => mainWindow.webContents.send(IPC.onMissionProgress, p))
+  link.on('setup-event', (event) => mainWindow.webContents.send(IPC.onSetupEvent, event))
   link.on('status-message', (msg) => mainWindow.webContents.send(IPC.onStatusMessage, msg))
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {

@@ -92,8 +92,18 @@ export interface HeartbeatData {
 }
 
 export interface RcChannelsData {
-  channels: number[]
+  channels: number[] // raw microseconds, index 0 = channel 1; 0 = channel not received
   rssi: number
+}
+
+// Attitude the vehicle's controller is aiming for (ATTITUDE_TARGET), radians and rad/s.
+export interface AttitudeTargetData {
+  roll: number
+  pitch: number
+  yaw: number
+  rollRate: number
+  pitchRate: number
+  yawRate: number
 }
 
 // Single-point distance sensor (rangefinder / one sector of a proximity sensor). Distances in metres.
@@ -125,7 +135,22 @@ export interface ProximityData {
   scan?: ObstacleScanData
 }
 
+// One axis of the rate/angle controller from PID_TUNING (needs GCS_PID_MASK set on the vehicle). Rates in deg/s.
+export interface PidTuningData {
+  desired: number
+  achieved: number
+  ff: number
+  p: number
+  i: number
+  d: number
+  timestamp: number
+}
+
 export interface TelemetryState {
+  navTarget?: { roll: number; pitch: number } // degrees, from NAV_CONTROLLER_OUTPUT
+  pid?: Record<number, PidTuningData> // keyed by axis: 1 roll, 2 pitch, 3 yaw
+  servoOutputs?: number[] // SERVO_OUTPUT_RAW, microseconds, index 0 = output 1
+  attitudeTarget?: AttitudeTargetData
   proximity?: ProximityData
   missionCurrent?: number
   armed: boolean
@@ -175,6 +200,26 @@ export type VehicleCommand =
   | { type: 'disarm'; force?: boolean }
   | { type: 'setMode'; mode: number }
   | { type: 'takeoff'; altitude: number }
+  | { type: 'calibrate'; kind: 'gyro' | 'level' | 'baro' | 'accel' }
+  | { type: 'accelPosition'; position: number } // tell the vehicle it has been placed in the requested orientation
+  | { type: 'magCal'; action: 'start' | 'cancel' | 'accept'; mask?: number } // mask 0 = all compasses
+  | { type: 'motorTest'; motor: number; throttlePercent: number; durationSec: number; count?: number }
+  | { type: 'motorTestStop' }
+  | { type: 'reboot' }
+  | { type: 'messageRate'; messageId: number; hz: number } // hz 0 = restore the vehicle's default rate
+
+// Events from the vehicle's calibration procedures.
+export type SetupEvent =
+  | { type: 'accelPosition'; position: number } // 1 level, 2 left, 3 right, 4 nose down, 5 nose up, 6 back; 16777215 = success, 16777216 = failed
+  | { type: 'magProgress'; compassId: number; status: number; attempt: number; percent: number; mask: number[] }
+  | {
+      type: 'magReport'
+      compassId: number
+      status: number
+      fitness: number
+      autosaved: boolean
+      offsets: [number, number, number]
+    }
 
 export interface MissionProgress {
   op: 'upload' | 'download'
@@ -190,6 +235,7 @@ export const IPC = {
   onMissionProgress: 'mission:progress',
   sendCommand: 'link:send-command',
   onStatusMessage: 'link:status-message',
+  onSetupEvent: 'setup:event',
   listSerialPorts: 'link:list-serial-ports',
   connect: 'link:connect',
   disconnect: 'link:disconnect',

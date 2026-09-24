@@ -7,8 +7,10 @@ import type {
   MissionProgress,
   ParamEntry,
   ParamProgress,
+  SetupEvent,
   StatusMessage,
-  TelemetryState
+  TelemetryState,
+  VehicleCommand
 } from '../../shared/types'
 
 interface AppState {
@@ -151,6 +153,24 @@ export function useConnection(): ConnectionState {
   return useSyncExternalStore(subscribe, () => state.connection)
 }
 
+// Re-renders only when the selected value changes, unlike useTelemetry() which re-renders on every update.
+export function useTelemetrySelector<T>(select: (t: TelemetryState) => T): T {
+  return useSyncExternalStore(subscribe, () => select(state.telemetry))
+}
+
+export function useArmed(): boolean {
+  return useTelemetrySelector((t) => t.armed)
+}
+
+export function getTelemetry(): TelemetryState {
+  return state.telemetry
+}
+
+// Calls back on every store change without re-rendering anything. Returns an unsubscribe function.
+export function subscribeToStore(listener: () => void): () => void {
+  return subscribe(listener)
+}
+
 export function useTelemetry(): TelemetryState {
   return useSyncExternalStore(subscribe, () => state.telemetry)
 }
@@ -277,4 +297,70 @@ export const missionActions = {
       pushMessage(`Set active waypoint failed: ${errText(err)}`, 3)
     }
   }
+}
+
+export function useParamMap(): Map<string, ParamEntry> {
+  return useSyncExternalStore(subscribe, () => state.params)
+}
+
+// Sends a vehicle command and reports failures in the messages panel. Resolves true on success.
+export async function runCommand(cmd: VehicleCommand): Promise<boolean> {
+  try {
+    await window.api.sendCommand(cmd)
+    return true
+  } catch (err) {
+    pushMessage(errText(err), 3)
+    return false
+  }
+}
+
+// ---- calibration progress (accelerometer prompts, compass calibration) ----
+
+export interface MagCalState {
+  status: number
+  attempt: number
+  percent: number
+  mask: number[]
+  report?: { status: number; fitness: number; autosaved: boolean; offsets: [number, number, number] }
+}
+
+export interface SetupState {
+  accelPosition: number | null // last position the vehicle asked for (16777215 success, 16777216 failed)
+  mag: Record<number, MagCalState>
+}
+
+const EMPTY_SETUP: SetupState = { accelPosition: null, mag: {} }
+let setupState: SetupState = EMPTY_SETUP
+
+function handleSetupEvent(event: SetupEvent): void {
+  if (event.type === 'accelPosition') {
+    setupState = { ...setupState, accelPosition: event.position }
+  } else if (event.type === 'magProgress') {
+    const prev = setupState.mag[event.compassId]
+    setupState = {
+      ...setupState,
+      mag: { ...setupState.mag, [event.compassId]: { ...prev, status: event.status, attempt: event.attempt, percent: event.percent, mask: event.mask } }
+    }
+  } else {
+    const prev = setupState.mag[event.compassId] ?? { status: event.status, attempt: 0, percent: 100, mask: [] }
+    setupState = {
+      ...setupState,
+      mag: {
+        ...setupState.mag,
+        [event.compassId]: { ...prev, status: event.status, report: { status: event.status, fitness: event.fitness, autosaved: event.autosaved, offsets: event.offsets } }
+      }
+    }
+  }
+  emit()
+}
+
+window.api.onSetupEvent(handleSetupEvent)
+
+export function resetSetupState(): void {
+  setupState = EMPTY_SETUP
+  emit()
+}
+
+export function useSetupState(): SetupState {
+  return useSyncExternalStore(subscribe, () => setupState)
 }

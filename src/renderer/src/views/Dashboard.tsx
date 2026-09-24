@@ -2,10 +2,12 @@ import AttitudeIndicator from '../components/hud/AttitudeIndicator'
 import Tape from '../components/hud/Tape'
 import HeadingRibbon from '../components/hud/HeadingRibbon'
 import ProximityRadar from '../components/hud/ProximityRadar'
+import MiniMap from '../components/hud/MiniMap'
 import StatCard from '../components/StatCard'
 import FlightControls from '../components/FlightControls'
 import MessagesPanel from '../components/MessagesPanel'
 import { useConnection, useTelemetry } from '../store'
+import { usePersistedFlag } from '../usePersistedFlag'
 
 const GPS_FIX_NAMES: Record<number, string> = {
   0: 'NO GPS',
@@ -22,6 +24,8 @@ const GPS_FIX_NAMES: Record<number, string> = {
 export default function Dashboard(): React.JSX.Element {
   const connection = useConnection()
   const telemetry = useTelemetry()
+  const [showRadar, setShowRadar] = usePersistedFlag('showProximityRadar', true)
+  const [showMap, setShowMap] = usePersistedFlag('showDashboardMap', true)
 
   if (connection.status !== 'connected') {
     return (
@@ -60,7 +64,16 @@ export default function Dashboard(): React.JSX.Element {
           <HeadingRibbon headingDeg={headingDeg} />
         </div>
         <Tape value={pos?.relativeAlt ?? vfr?.alt ?? 0} unit="m ALT" step={10} side="right" />
-        <ProximityRadar />
+        {showMap ? (
+          <MiniMap onHide={() => setShowMap(false)} />
+        ) : (
+          <ShowButton onClick={() => setShowMap(true)}>Show map</ShowButton>
+        )}
+        {showRadar ? (
+          <ProximityRadar onHide={() => setShowRadar(false)} />
+        ) : (
+          <ShowButton onClick={() => setShowRadar(true)}>Show proximity radar</ShowButton>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -107,5 +120,16 @@ export default function Dashboard(): React.JSX.Element {
         <MessagesPanel />
       </div>
     </div>
+  )
+}
+
+function ShowButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }): React.JSX.Element {
+  return (
+    <button
+      onClick={onClick}
+      style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-1)' }}
+    >
+      {children}
+    </button>
   )
 }

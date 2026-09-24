@@ -9,6 +9,7 @@ import type {
   ParamEntry,
   ParamProgress,
   SerialPortInfo,
+  SetupEvent,
   StatusMessage,
   TelemetryState,
   VehicleCommand
@@ -34,6 +35,11 @@ const api = {
   },
   sendCommand: (cmd: VehicleCommand): Promise<void> => ipcRenderer.invoke(IPC.sendCommand, cmd),
 
+  onSetupEvent: (cb: (event: SetupEvent) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, event: SetupEvent): void => cb(event)
+    ipcRenderer.on(IPC.onSetupEvent, listener)
+    return () => ipcRenderer.removeListener(IPC.onSetupEvent, listener)
+  },
   onStatusMessage: (cb: (msg: StatusMessage) => void): (() => void) => {
     const listener = (_e: Electron.IpcRendererEvent, msg: StatusMessage): void => cb(msg)
     ipcRenderer.on(IPC.onStatusMessage, listener)

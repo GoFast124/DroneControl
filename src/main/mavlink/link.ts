@@ -31,6 +31,7 @@ import type {
   ParamEntry,
   ParamProgress,
   RcChannelsData,
+  SetupEvent,
   StatusMessage,
   TelemetryState,
   VehicleCommand,
@@ -48,6 +49,16 @@ const REGISTRY: MavLinkPacketRegistry = {
 }
 
 const MAV_MODE_FLAG_SAFETY_ARMED = 0x80
+const TELEMETRY_EMIT_MS = 33
+
+const CMD_PREFLIGHT_CALIBRATION = 241
+const CMD_PREFLIGHT_REBOOT = 246
+const CMD_DO_MOTOR_TEST = 209
+const CMD_SET_MESSAGE_INTERVAL = 511
+const CMD_DO_START_MAG_CAL = 42424
+const CMD_DO_ACCEPT_MAG_CAL = 42425
+const CMD_DO_CANCEL_MAG_CAL = 42426
+const CMD_ACCELCAL_VEHICLE_POS = 42429
 
 class UdpWritable extends Writable {
   constructor(
@@ -75,6 +86,7 @@ export interface MavlinkLinkEvents {
   log: (entry: LogEntry) => void
   'status-message': (message: StatusMessage) => void
   'mission-progress': (progress: MissionProgress) => void
+  'setup-event': (event: SetupEvent) => void
 }
 
 export declare interface MavlinkLink {
@@ -89,6 +101,7 @@ export class MavlinkLink extends EventEmitter {
   private paramTotal = 0
   private proximitySensors = new Map<string, DistanceSensorData>()
   private proximityScan: ObstacleScanData | undefined
+  private telemetryTimer: NodeJS.Timeout | null = null
 
   private readonly mission = new MissionClient(
     (msg) => this.sendMessage(msg),
@@ -227,6 +240,42 @@ export class MavlinkLink extends EventEmitter {
         return this.setMode(cmd.mode)
       case 'takeoff':
         return this.takeoff(cmd.altitude)
+      case 'calibrate': {
+        // PREFLIGHT_CALIBRATION: param1 gyro, param3 ground pressure (baro), param5 accel (1 = full six-position, 2 = level trim)
+        const params = { gyro: [1], baro: [0, 0, 1], accel: [0, 0, 0, 0, 1], level: [0, 0, 0, 0, 2] }[cmd.kind]
+        this.emitGcsMessage(`${cmd.kind} calibration requested`)
+        return this.sendCommandLong(CMD_PREFLIGHT_CALIBRATION as common.MavCmd, params)
+      }
+      case 'accelPosition':
+        return this.sendCommandLong(CMD_ACCELCAL_VEHICLE_POS as common.MavCmd, [cmd.position])
+      case 'magCal': {
+        if (cmd.action === 'start') {
+          this.emitGcsMessage('Compass calibration requested')
+          // mask, retry on failure, autosave (0: we ask the user to accept), delay, autoreboot
+          return this.sendCommandLong(CMD_DO_START_MAG_CAL as common.MavCmd, [cmd.mask ?? 0, 1, 0, 0, 0])
+        }
+        const id = cmd.action === 'accept' ? CMD_DO_ACCEPT_MAG_CAL : CMD_DO_CANCEL_MAG_CAL
+        return this.sendCommandLong(id as common.MavCmd, [cmd.mask ?? 0])
+      }
+      case 'motorTest': {
+        if (this.telemetry.armed) throw new Error('Disarm before running a motor test')
+        const { motor, throttlePercent, durationSec } = cmd
+        if (!(throttlePercent >= 0 && throttlePercent <= 100)) throw new Error('Throttle must be between 0 and 100%')
+        if (!(durationSec > 0 && durationSec <= 10)) throw new Error('Duration must be between 0 and 10 seconds')
+        this.emitGcsMessage(`Motor test: motor ${motor}, ${throttlePercent}% for ${durationSec}s${cmd.count && cmd.count > 1 ? ` (sequence of ${cmd.count})` : ''}`)
+        // motor instance, throttle type 0 (percent), throttle, timeout, motor count
+        return this.sendCommandLong(CMD_DO_MOTOR_TEST as common.MavCmd, [motor, 0, throttlePercent, durationSec, cmd.count ?? 1])
+      }
+      case 'motorTestStop':
+        this.emitGcsMessage('Motor test stop requested')
+        return this.sendCommandLong(CMD_DO_MOTOR_TEST as common.MavCmd, [1, 0, 0, 0.1, 1])
+      case 'reboot':
+        this.emitGcsMessage('Reboot requested', 4)
+        return this.sendCommandLong(CMD_PREFLIGHT_REBOOT as common.MavCmd, [1])
+      case 'messageRate': {
+        const interval = cmd.hz > 0 ? Math.round(1_000_000 / cmd.hz) : 0
+        return this.sendCommandLong(CMD_SET_MESSAGE_INTERVAL as common.MavCmd, [cmd.messageId, interval])
+      }
     }
   }
 
@@ -501,18 +550,58 @@ export class MavlinkLink extends EventEmitter {
       }
       this.updateTelemetry({ battery })
     } else if (data instanceof common.RcChannels) {
-      const channels = [
-        data.chan1Raw,
-        data.chan2Raw,
-        data.chan3Raw,
-        data.chan4Raw,
-        data.chan5Raw,
-        data.chan6Raw,
-        data.chan7Raw,
-        data.chan8Raw
-      ].filter((v) => v !== 0 && v !== 65535)
+      const raw = data as unknown as Record<string, number>
+      const count = Math.min(data.chancount || 18, 18)
+      const channels: number[] = []
+      for (let i = 1; i <= 18; i++) {
+        const v = raw[`chan${i}Raw`]
+        channels.push(i <= count && v !== 65535 ? v : 0)
+      }
       const rc: RcChannelsData = { channels, rssi: data.rssi }
       this.updateTelemetry({ rc })
+    } else if (data instanceof common.NavControllerOutput) {
+      this.updateTelemetry({ navTarget: { roll: data.navRoll, pitch: data.navPitch } })
+    } else if (data instanceof ardupilotmega.PidTuning) {
+      const pid = { ...this.telemetry.pid }
+      pid[data.axis] = { desired: data.desired, achieved: data.achieved, ff: data.FF, p: data.P, i: data.I, d: data.D, timestamp: Date.now() }
+      this.updateTelemetry({ pid })
+    } else if (data instanceof common.ServoOutputRaw) {
+      const raw = data as unknown as Record<string, number>
+      const servoOutputs: number[] = []
+      for (let i = 1; i <= 16; i++) servoOutputs.push(raw[`servo${i}Raw`] ?? 0)
+      this.updateTelemetry({ servoOutputs })
+    } else if (data instanceof common.AttitudeTarget) {
+      const [w, x, y, z] = data.q
+      this.updateTelemetry({
+        attitudeTarget: {
+          roll: Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)),
+          pitch: Math.asin(Math.max(-1, Math.min(1, 2 * (w * y - z * x)))),
+          yaw: Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)),
+          rollRate: data.bodyRollRate,
+          pitchRate: data.bodyPitchRate,
+          yawRate: data.bodyYawRate
+        }
+      })
+    } else if (data instanceof common.CommandLong && (data.command as number) === CMD_ACCELCAL_VEHICLE_POS) {
+      this.emit('setup-event', { type: 'accelPosition', position: data._param1 })
+    } else if (data instanceof ardupilotmega.MagCalProgress) {
+      this.emit('setup-event', {
+        type: 'magProgress',
+        compassId: data.compassId,
+        status: data.calStatus,
+        attempt: data.attempt,
+        percent: data.completionPct,
+        mask: Array.from(data.completionMask)
+      })
+    } else if (data instanceof common.MagCalReport) {
+      this.emit('setup-event', {
+        type: 'magReport',
+        compassId: data.compassId,
+        status: data.calStatus,
+        fitness: data.fitness,
+        autosaved: data.autosaved !== 0,
+        offsets: [data.ofsX, data.ofsY, data.ofsZ]
+      })
     } else if (data instanceof common.ParamValue) {
       this.handleParamValue(data)
     } else if (data instanceof common.DistanceSensor) {
@@ -530,7 +619,9 @@ export class MavlinkLink extends EventEmitter {
       })
     } else if (data instanceof common.CommandAck) {
       // Accepted acks are noise (the state change shows in the top bar); surface everything else.
-      if (data.result !== common.MavResult.ACCEPTED && data.result !== common.MavResult.IN_PROGRESS) {
+      // Message-rate requests are best effort (a vehicle may simply not have that message), so their failures aren't worth showing.
+      const bestEffort = (data.command as number) === CMD_SET_MESSAGE_INTERVAL
+      if (!bestEffort && data.result !== common.MavResult.ACCEPTED && data.result !== common.MavResult.IN_PROGRESS) {
         const name = common.MavCmd[data.command] ?? `command ${data.command}`
         const result = common.MavResult[data.result] ?? data.result
         this.emitGcsMessage(`${name} ${String(result).toLowerCase().replace(/_/g, ' ')} by vehicle`, 4)
@@ -598,7 +689,12 @@ export class MavlinkLink extends EventEmitter {
 
   private updateTelemetry(patch: Partial<TelemetryState>): void {
     this.telemetry = { ...this.telemetry, ...patch }
-    this.emit('telemetry', this.telemetry)
+    if (this.telemetryTimer) return
+    // Coalesce bursts: the UI gets at most ~30 updates a second, always carrying the latest state.
+    this.telemetryTimer = setTimeout(() => {
+      this.telemetryTimer = null
+      this.emit('telemetry', this.telemetry)
+    }, TELEMETRY_EMIT_MS)
   }
 }
 
