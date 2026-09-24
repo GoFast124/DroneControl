@@ -96,7 +96,37 @@ export interface RcChannelsData {
   rssi: number
 }
 
+// Single-point distance sensor (rangefinder / one sector of a proximity sensor). Distances in metres.
+export interface DistanceSensorData {
+  id: number
+  // MAV_SENSOR_ORIENTATION: 0-7 = yaw 0..315 deg clockwise, 24 = up, 25 = down, 100 = custom quaternion
+  orientation: number
+  distance: number
+  min: number
+  max: number
+  fovDeg: number // horizontal field of view, 0 if the sensor doesn't report it
+  yawDeg?: number // only for custom orientation
+  timestamp: number
+}
+
+// 360 degree scan from OBSTACLE_DISTANCE. distances[i] is at angleOffset + i * increment (deg clockwise); NaN = no reading.
+export interface ObstacleScanData {
+  distances: number[]
+  increment: number
+  angleOffset: number
+  min: number
+  max: number
+  frame: number // MAV_FRAME: body frames are vehicle-relative, GLOBAL (0) is north-aligned
+  timestamp: number
+}
+
+export interface ProximityData {
+  sensors: DistanceSensorData[]
+  scan?: ObstacleScanData
+}
+
 export interface TelemetryState {
+  proximity?: ProximityData
   missionCurrent?: number
   armed: boolean
   flightMode: string

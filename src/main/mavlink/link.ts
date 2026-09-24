@@ -21,11 +21,13 @@ import type {
   BatteryData,
   ConnectionConfig,
   ConnectionState,
+  DistanceSensorData,
   GlobalPositionData,
   GpsRawData,
   HeartbeatData,
   LogEntry,
   MissionProgress,
+  ObstacleScanData,
   ParamEntry,
   ParamProgress,
   RcChannelsData,
@@ -85,6 +87,8 @@ export class MavlinkLink extends EventEmitter {
   private telemetry: TelemetryState = { armed: false, flightMode: 'UNKNOWN' }
   private params = new Map<string, ParamEntry>()
   private paramTotal = 0
+  private proximitySensors = new Map<string, DistanceSensorData>()
+  private proximityScan: ObstacleScanData | undefined
 
   private readonly mission = new MissionClient(
     (msg) => this.sendMessage(msg),
@@ -162,6 +166,8 @@ export class MavlinkLink extends EventEmitter {
     this.writable = null
     this.params.clear()
     this.paramTotal = 0
+    this.proximitySensors.clear()
+    this.proximityScan = undefined
     this.telemetry = { armed: false, flightMode: 'UNKNOWN' }
     if (this.connectionState.status !== 'disconnected') {
       this.setConnectionState({ status: 'disconnected' })
@@ -292,8 +298,13 @@ export class MavlinkLink extends EventEmitter {
     this.writable = port
     const reader = port.pipe(new MavLinkPacketSplitter()).pipe(new MavLinkPacketParser())
     reader.on('data', (packet: MavLinkPacket) => this.handlePacket(packet))
-    port.on('close', () => this.setConnectionState({ status: 'disconnected' }))
-    port.on('error', (err) => this.setConnectionState({ status: 'error', error: err.message }))
+    // Ignore events from a previous connection: their delayed 'close' would otherwise clobber the new link's state.
+    port.on('close', () => {
+      if (this.serialPort === port) this.disconnect()
+    })
+    port.on('error', (err) => {
+      if (this.serialPort === port) this.setConnectionState({ status: 'error', error: err.message })
+    })
   }
 
   private async connectTcp(host: string, port: number): Promise<void> {
@@ -309,8 +320,12 @@ export class MavlinkLink extends EventEmitter {
     this.writable = socket
     const reader = socket.pipe(new MavLinkPacketSplitter()).pipe(new MavLinkPacketParser())
     reader.on('data', (packet: MavLinkPacket) => this.handlePacket(packet))
-    socket.on('close', () => this.setConnectionState({ status: 'disconnected' }))
-    socket.on('error', (err) => this.setConnectionState({ status: 'error', error: err.message }))
+    socket.on('close', () => {
+      if (this.tcpSocket === socket) this.disconnect()
+    })
+    socket.on('error', (err) => {
+      if (this.tcpSocket === socket) this.setConnectionState({ status: 'error', error: err.message })
+    })
   }
 
   private async connectUdp(bindPort: number, remoteHost?: string, remotePort?: number): Promise<void> {
@@ -332,7 +347,9 @@ export class MavlinkLink extends EventEmitter {
       }
       splitter.write(msg)
     })
-    socket.on('error', (err) => this.setConnectionState({ status: 'error', error: err.message }))
+    socket.on('error', (err) => {
+      if (this.udpSocket === socket) this.setConnectionState({ status: 'error', error: err.message })
+    })
 
     await new Promise<void>((resolve, reject) => {
       socket.once('error', reject)
@@ -498,6 +515,10 @@ export class MavlinkLink extends EventEmitter {
       this.updateTelemetry({ rc })
     } else if (data instanceof common.ParamValue) {
       this.handleParamValue(data)
+    } else if (data instanceof common.DistanceSensor) {
+      this.handleDistanceSensor(data)
+    } else if (data instanceof common.ObstacleDistance) {
+      this.handleObstacleDistance(data)
     } else if (data instanceof common.MissionCurrent) {
       this.updateTelemetry({ missionCurrent: data.seq })
     } else if (data instanceof common.StatusText) {
@@ -515,6 +536,51 @@ export class MavlinkLink extends EventEmitter {
         this.emitGcsMessage(`${name} ${String(result).toLowerCase().replace(/_/g, ' ')} by vehicle`, 4)
       }
     }
+  }
+
+  private handleDistanceSensor(data: common.DistanceSensor): void {
+    const now = Date.now()
+    let yawDeg: number | undefined
+    if (data.orientation === 100 && data.quaternion?.length === 4) {
+      const [w, x, y, z] = data.quaternion
+      yawDeg = (Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)) * 180) / Math.PI
+    }
+    this.proximitySensors.set(`${data.id}:${data.orientation}`, {
+      id: data.id,
+      orientation: data.orientation,
+      distance: data.currentDistance / 100,
+      min: data.minDistance / 100,
+      max: data.maxDistance / 100,
+      fovDeg: data.horizontalFov > 0 && data.horizontalFov < 360 ? (data.horizontalFov * 180) / Math.PI : 0,
+      yawDeg,
+      timestamp: now
+    })
+    for (const [key, s] of this.proximitySensors) if (now - s.timestamp > 5000) this.proximitySensors.delete(key)
+    this.emitProximity()
+  }
+
+  private handleObstacleDistance(data: common.ObstacleDistance): void {
+    const min = data.minDistance / 100
+    const max = data.maxDistance / 100
+    // UINT16_MAX means unknown; anything outside [min, max] is "nothing detected" for drawing purposes.
+    const distances = data.distances.map((cm) => {
+      const d = cm / 100
+      return cm === 65535 || d < min || d > max ? NaN : d
+    })
+    this.proximityScan = {
+      distances,
+      increment: data.incrementF > 0 ? data.incrementF : data.increment,
+      angleOffset: data.angleOffset || 0,
+      min,
+      max,
+      frame: data.frame,
+      timestamp: Date.now()
+    }
+    this.emitProximity()
+  }
+
+  private emitProximity(): void {
+    this.updateTelemetry({ proximity: { sensors: [...this.proximitySensors.values()], scan: this.proximityScan } })
   }
 
   private handleParamValue(data: common.ParamValue): void {
