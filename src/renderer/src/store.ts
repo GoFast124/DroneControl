@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react'
 import { distanceMeters, newWaypoint } from '../../shared/mission'
 import type { MissionItem } from '../../shared/mission'
+import { DEFAULT_SURVEY_SETTINGS } from '../../shared/survey'
+import type { LatLon, SurveySettings } from '../../shared/survey'
 import type {
   ConnectionState,
   LogEntry,
@@ -22,6 +24,13 @@ interface AppState {
   messages: StatusMessage[]
   trail: [number, number][]
   mission: MissionEditor
+  survey: SurveyEditor
+}
+
+export interface SurveyEditor {
+  polygon: LatLon[]
+  drawing: boolean // map clicks add corners
+  settings: SurveySettings
 }
 
 export interface MissionEditor {
@@ -38,6 +47,21 @@ export interface MissionEditor {
 const MAX_LOGS = 500
 const MAX_MESSAGES = 300
 
+const SURVEY_SETTINGS_KEY = 'surveySettings'
+
+// Camera and flight choices are remembered between sessions; anything missing or unreadable falls back to the defaults.
+function loadSurveySettings(): SurveySettings {
+  try {
+    const stored = JSON.parse(localStorage.getItem(SURVEY_SETTINGS_KEY) ?? 'null') as Partial<SurveySettings> | null
+    if (stored && typeof stored === 'object') {
+      return { ...DEFAULT_SURVEY_SETTINGS, ...stored, camera: { ...DEFAULT_SURVEY_SETTINGS.camera, ...stored.camera } }
+    }
+  } catch {
+    // fall through to defaults
+  }
+  return DEFAULT_SURVEY_SETTINGS
+}
+
 const state: AppState = {
   connection: { status: 'disconnected' },
   telemetry: { armed: false, flightMode: 'UNKNOWN' },
@@ -46,7 +70,8 @@ const state: AppState = {
   logs: [],
   messages: [],
   trail: [],
-  mission: { items: [], home: null, selected: null, defaultAlt: 20, dirty: false, progress: null, busy: false }
+  mission: { items: [], home: null, selected: null, defaultAlt: 20, dirty: false, progress: null, busy: false },
+  survey: { polygon: [], drawing: false, settings: loadSurveySettings() }
 }
 
 const listeners = new Set<() => void>()
@@ -201,6 +226,45 @@ export function clearTrail(): void {
   emit()
 }
 
+export function useSurvey(): SurveyEditor {
+  return useSyncExternalStore(subscribe, () => state.survey)
+}
+
+function setSurvey(patch: Partial<SurveyEditor>): void {
+  state.survey = { ...state.survey, ...patch }
+  emit()
+}
+
+export const surveyActions = {
+  setDrawing(drawing: boolean): void {
+    setSurvey({ drawing })
+  },
+  addPoint(lat: number, lon: number): void {
+    setSurvey({ polygon: [...state.survey.polygon, [lat, lon]] })
+  },
+  movePoint(index: number, lat: number, lon: number): void {
+    setSurvey({ polygon: state.survey.polygon.map((p, i) => (i === index ? [lat, lon] : p)) })
+  },
+  removePoint(index: number): void {
+    setSurvey({ polygon: state.survey.polygon.filter((_, i) => i !== index) })
+  },
+  undoPoint(): void {
+    setSurvey({ polygon: state.survey.polygon.slice(0, -1) })
+  },
+  clear(): void {
+    setSurvey({ polygon: [], drawing: false })
+  },
+  updateSettings(patch: Partial<SurveySettings>): void {
+    const settings = { ...state.survey.settings, ...patch }
+    try {
+      localStorage.setItem(SURVEY_SETTINGS_KEY, JSON.stringify(settings))
+    } catch {
+      // settings just won't be remembered
+    }
+    setSurvey({ settings })
+  }
+}
+
 export function useMission(): MissionEditor {
   return useSyncExternalStore(subscribe, () => state.mission)
 }
@@ -249,6 +313,10 @@ export const missionActions = {
   },
   replaceAll(items: MissionItem[], home: MissionItem | null, dirty: boolean): void {
     setMission({ items, home, selected: null, dirty })
+  },
+  appendItems(items: MissionItem[]): void {
+    const m = state.mission
+    setMission({ items: [...m.items, ...items], selected: null, dirty: true })
   },
   clearEditor(): void {
     setMission({ items: [], selected: null, dirty: true })

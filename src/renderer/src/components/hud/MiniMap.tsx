@@ -80,6 +80,7 @@ export default function MiniMap({ onHide }: { onHide: () => void }): React.JSX.E
   const trafficLooks = useRef(new Map<string, string>())
   const followRef = useRef(true)
   const [showTraffic, setShowTraffic] = usePersistedFlag('showMapTraffic', true)
+  const [showWaypoints, setShowWaypoints] = usePersistedFlag('showMapWaypoints', true)
   const [follow, setFollow] = useState(true)
   followRef.current = follow
 
@@ -198,6 +199,7 @@ export default function MiniMap({ onHide }: { onHide: () => void }): React.JSX.E
     const layer = missionLayer.current
     if (!layer) return
     layer.clearLayers()
+    if (!showWaypoints) return
     const path: L.LatLngTuple[] = []
     mission.items.forEach((item, i) => {
       if (!isMappable(item)) return
@@ -213,7 +215,7 @@ export default function MiniMap({ onHide }: { onHide: () => void }): React.JSX.E
       }).addTo(layer)
     })
     if (path.length > 1) L.polyline(path, { color: '#f5b942', weight: 2, dashArray: '6 5', interactive: false }).addTo(layer)
-  }, [mission.items, telemetry.missionCurrent])
+  }, [mission.items, telemetry.missionCurrent, showWaypoints])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -238,9 +240,12 @@ export default function MiniMap({ onHide }: { onHide: () => void }): React.JSX.E
           </div>
         )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 6, fontSize: 11, maxWidth: 320 }}>
         <button onClick={() => setFollow(!follow)} style={smallBtn(follow)} title="Keep the aircraft centred">
           Follow
+        </button>
+        <button onClick={() => setShowWaypoints(!showWaypoints)} style={smallBtn(showWaypoints)} title="Show the mission waypoints and path">
+          Waypoints
         </button>
         <button onClick={() => setShowTraffic(!showTraffic)} style={smallBtn(showTraffic)} title="Show nearby aircraft and the 10 km range ring">
           Traffic

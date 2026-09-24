@@ -38,6 +38,7 @@ export const MISSION_COMMANDS: MissionCommandInfo[] = [
   { id: 177, name: 'DO_JUMP', hasPosition: false, params: ['Item #', 'Repeats', '', ''] },
   { id: 115, name: 'CONDITION_YAW', hasPosition: false, params: ['Angle (deg)', 'Rate (deg/s)', 'Dir (1 cw, -1 ccw)', 'Relative (1/0)'] },
   { id: 183, name: 'DO_SET_SERVO', hasPosition: false, params: ['Channel', 'PWM', '', ''] },
+  { id: 206, name: 'DO_SET_CAM_TRIGG_DIST', hasPosition: false, params: ['Distance (m, 0 = off)', 'Shutter (ms)', 'Trigger now (1/0)', ''] },
   { id: 181, name: 'DO_SET_RELAY', hasPosition: false, params: ['Relay #', 'On (1/0)', '', ''] }
 ]
 
