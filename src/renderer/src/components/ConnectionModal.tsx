@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { SerialPortInfo } from '../../../shared/types'
 
-const BAUD_RATES = [4800, 9600, 19200, 38400, 57600, 111100, 115200, 230400, 460800, 921600]
+const BAUD_RATES = [4800, 9600, 19200, 38400, 57600, 111100, 115200, 230400, 460800, 921600, 1000000, 1500000]
 
 export default function ConnectionModal({ onClose }: { onClose: () => void }): React.JSX.Element {
   const [kind, setKind] = useState<'serial' | 'udp' | 'tcp'>('udp')
