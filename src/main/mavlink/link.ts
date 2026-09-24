@@ -34,6 +34,7 @@ import type {
   ParamProgress,
   RcChannelsData,
   SetupEvent,
+  SensorStatus,
   StatusMessage,
   TelemetryState,
   TrafficData,
@@ -571,7 +572,36 @@ export class MavlinkLink extends EventEmitter {
         currentBattery: data.currentBattery / 100,
         batteryRemaining: data.batteryRemaining
       }
-      this.updateTelemetry({ battery })
+      const sensors: SensorStatus = {
+        present: data.onboardControlSensorsPresent >>> 0,
+        enabled: data.onboardControlSensorsEnabled >>> 0,
+        health: data.onboardControlSensorsHealth >>> 0,
+        cpuLoad: data.load / 10,
+        commDropPercent: data.dropRateComm / 100
+      }
+      this.updateTelemetry({ battery, sensors })
+    } else if (data instanceof ardupilotmega.EkfStatusReport) {
+      this.updateTelemetry({
+        ekf: {
+          flags: data.flags as number,
+          velocityVariance: data.velocityVariance,
+          posHorizVariance: data.posHorizVariance,
+          posVertVariance: data.posVertVariance,
+          compassVariance: data.compassVariance,
+          terrainAltVariance: data.terrainAltVariance
+        }
+      })
+    } else if (data instanceof common.Vibration) {
+      this.updateTelemetry({
+        vibration: {
+          x: data.vibrationX,
+          y: data.vibrationY,
+          z: data.vibrationZ,
+          clipping: [data.clipping0, data.clipping1, data.clipping2]
+        }
+      })
+    } else if (data instanceof common.PowerStatus) {
+      this.updateTelemetry({ power: { vcc: data.Vcc / 1000, vservo: data.Vservo / 1000 } })
     } else if (data instanceof common.RcChannels) {
       const raw = data as unknown as Record<string, number>
       const count = Math.min(data.chancount || 18, 18)

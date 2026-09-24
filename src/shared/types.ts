@@ -171,7 +171,42 @@ export interface TrafficData {
   }
 }
 
+// SYS_STATUS: which onboard subsystems exist, are in use and are working. Each is a bitmask (MAV_SYS_STATUS_SENSOR).
+export interface SensorStatus {
+  present: number
+  enabled: number
+  health: number
+  cpuLoad: number // percent
+  commDropPercent: number // packets lost on the link, percent
+}
+
+// EKF_STATUS_REPORT: what the state estimator currently trusts. flags is a bitmask (EKF_STATUS_FLAGS); variances are 0-1+.
+export interface EkfData {
+  flags: number
+  velocityVariance: number
+  posHorizVariance: number
+  posVertVariance: number
+  compassVariance: number
+  terrainAltVariance: number
+}
+
+export interface VibrationData {
+  x: number // m/s/s
+  y: number
+  z: number
+  clipping: number[] // accelerometer clip counts, one per IMU
+}
+
+export interface PowerData {
+  vcc: number // flight controller 5 V rail, volts
+  vservo: number // servo rail, volts
+}
+
 export interface TelemetryState {
+  sensors?: SensorStatus
+  ekf?: EkfData
+  vibration?: VibrationData
+  power?: PowerData
   traffic?: TrafficData
   navTarget?: { roll: number; pitch: number } // degrees, from NAV_CONTROLLER_OUTPUT
   pid?: Record<number, PidTuningData> // keyed by axis: 1 roll, 2 pitch, 3 yaw

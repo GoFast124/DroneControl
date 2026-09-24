@@ -4,6 +4,7 @@ import HeadingRibbon from '../components/hud/HeadingRibbon'
 import ProximityRadar from '../components/hud/ProximityRadar'
 import MiniMap from '../components/hud/MiniMap'
 import StatCard from '../components/StatCard'
+import SystemStatus from '../components/SystemStatus'
 import TrafficCard from '../components/TrafficCard'
 import FlightControls from '../components/FlightControls'
 import MessagesPanel from '../components/MessagesPanel'
@@ -45,6 +46,9 @@ export default function Dashboard(): React.JSX.Element {
   const gps = telemetry.gpsRaw
   const battery = telemetry.battery
   const rc = telemetry.rc
+  const hasPosition = !!pos && (pos.lat !== 0 || pos.lon !== 0)
+  // RSSI 255 means the receiver isn't reporting one; with no RC channels there is nothing to show.
+  const rssiText = !rc || (rc.rssi === 255 && !rc.channels.some((c) => c > 0)) ? '—' : `${Math.round((rc.rssi / 254) * 100)}%`
   const headingDeg = vfr?.heading ?? (attitude.yaw * 180) / Math.PI
 
   const batteryColor =
@@ -101,21 +105,23 @@ export default function Dashboard(): React.JSX.Element {
         <StatCard
           title="Position"
           rows={[
-            { label: 'Lat', value: pos ? pos.lat.toFixed(6) : '—' },
-            { label: 'Lon', value: pos ? pos.lon.toFixed(6) : '—' },
+            { label: 'Lat', value: hasPosition && pos ? pos.lat.toFixed(6) : '—' },
+            { label: 'Lon', value: hasPosition && pos ? pos.lon.toFixed(6) : '—' },
             { label: 'Rel Alt', value: pos ? `${pos.relativeAlt.toFixed(1)} m` : '—' }
           ]}
         />
         <StatCard
           title="Radio / Throttle"
           rows={[
-            { label: 'RSSI', value: rc ? String(rc.rssi) : '—' },
+            { label: 'RSSI', value: rssiText },
             { label: 'Throttle', value: vfr ? `${vfr.throttle}%` : '—' },
             { label: 'Climb', value: vfr ? `${vfr.climb.toFixed(1)} m/s` : '—' }
           ]}
         />
         <TrafficCard />
       </div>
+
+      <SystemStatus />
 
       <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 1100, alignItems: 'stretch', flexWrap: 'wrap' }}>
         <FlightControls />
