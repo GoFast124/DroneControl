@@ -1,5 +1,7 @@
-import { useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useConnection, useParamProgress, useParams, writeParam } from '../store'
+import { paramChoices } from '../paramOptions'
+import type { ParamChoice } from '../paramOptions'
 
 const TYPE_NAMES: Record<number, string> = {
   1: 'UINT8',
@@ -55,6 +57,8 @@ export default function ParametersView(): React.JSX.Element {
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+
+  const pickChoice = useCallback((id: string, value: string) => setEdits((ed) => ({ ...ed, [id]: value })), [])
 
   const byId = useMemo(() => new Map(params.map((p) => [p.id, p])), [params])
 
@@ -282,6 +286,7 @@ export default function ParametersView(): React.JSX.Element {
               <tr style={{ position: 'sticky', top: 0, background: 'var(--bg-2)', zIndex: 1 }}>
                 <Th>Name</Th>
                 <Th>Value</Th>
+                <Th>Options</Th>
                 <Th>Type</Th>
                 <Th></Th>
               </tr>
@@ -291,6 +296,8 @@ export default function ParametersView(): React.JSX.Element {
                 const editValue = edits[p.id]
                 const dirty = dirtyIds.includes(p.id)
                 const st = status[p.id]
+                const choices = paramChoices(p.id)
+                const shown = editValue ?? formatValue(p.value)
                 return (
                   <tr key={p.id} style={{ borderTop: '1px solid var(--border)' }}>
                     <td style={{ padding: '6px 12px', fontFamily: 'var(--mono)', color: 'var(--text-0)' }}>{p.id}</td>
@@ -315,6 +322,9 @@ export default function ParametersView(): React.JSX.Element {
                           fontFamily: 'var(--mono)'
                         }}
                       />
+                    </td>
+                    <td style={{ padding: '6px 12px' }}>
+                      {choices && <ChoiceSelect id={p.id} choices={choices} shown={shown} dirty={dirty} onPick={pickChoice} />}
                     </td>
                     <td style={{ padding: '6px 12px', color: 'var(--text-2)' }}>{TYPE_NAMES[p.type] ?? p.type}</td>
                     <td style={{ padding: '6px 12px', whiteSpace: 'nowrap' }}>
@@ -342,6 +352,87 @@ export default function ParametersView(): React.JSX.Element {
     </div>
   )
 }
+
+// The named choices for a parameter. There are over a thousand of these on the page and some lists have well over a
+// hundred entries, so each one is plain text showing the current choice; the real dropdown only exists for the one
+// that was clicked, and goes away again when a choice is made or the pointer moves elsewhere.
+const ChoiceSelect = memo(function ChoiceSelect({
+  id,
+  choices,
+  shown,
+  dirty,
+  onPick
+}: {
+  id: string
+  choices: ParamChoice[]
+  shown: string
+  dirty: boolean
+  onPick: (id: string, value: string) => void
+}): React.JSX.Element {
+  const [open, setOpen] = useState(false)
+  const select = useRef<HTMLSelectElement>(null)
+  const current = Math.fround(Number(shown))
+  const matched = choices.find(([v]) => Math.fround(v) === current)
+  const style: React.CSSProperties = {
+    ...inputStyle,
+    width: 300,
+    padding: '4px 6px',
+    fontSize: 12,
+    borderColor: dirty ? 'var(--warn)' : 'var(--border)'
+  }
+
+  useEffect(() => {
+    if (!open) return
+    select.current?.focus()
+    try {
+      select.current?.showPicker()
+    } catch {
+      // the list still opens on the next click if the browser won't open it from here
+    }
+  }, [open])
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        title="Click to choose from the list"
+        style={{ ...style, display: 'flex', justifyContent: 'space-between', gap: 8, textAlign: 'left', cursor: 'pointer' }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: matched ? 'var(--text-0)' : 'var(--text-2)' }}>
+          {matched ? `${matched[0]} · ${matched[1]}` : `Other (${shown})`}
+        </span>
+        <span style={{ color: 'var(--text-2)' }}>▾</span>
+      </button>
+    )
+  }
+
+  return (
+    <select
+      ref={select}
+      value={matched ? String(matched[0]) : 'other'}
+      onChange={(e) => {
+        onPick(id, e.target.value)
+        setOpen(false)
+      }}
+      onBlur={() => setOpen(false)}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') setOpen(false)
+      }}
+      style={style}
+    >
+      {!matched && (
+        <option value="other" disabled>
+          Other ({shown})
+        </option>
+      )}
+      {choices.map(([value, label]) => (
+        <option key={value} value={String(value)}>
+          {value} · {label}
+        </option>
+      ))}
+    </select>
+  )
+})
 
 function ModeButton({
   active,
