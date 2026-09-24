@@ -1,14 +1,18 @@
 import { useSyncExternalStore } from 'react'
 import { distanceMeters, newWaypoint } from '../../shared/mission'
 import type { MissionItem } from '../../shared/mission'
+import { DEFAULT_SURVEY_SETTINGS } from '../../shared/survey'
+import type { LatLon, SurveySettings } from '../../shared/survey'
 import type {
   ConnectionState,
   LogEntry,
   MissionProgress,
   ParamEntry,
   ParamProgress,
+  SetupEvent,
   StatusMessage,
-  TelemetryState
+  TelemetryState,
+  VehicleCommand
 } from '../../shared/types'
 
 interface AppState {
@@ -20,6 +24,13 @@ interface AppState {
   messages: StatusMessage[]
   trail: [number, number][]
   mission: MissionEditor
+  survey: SurveyEditor
+}
+
+export interface SurveyEditor {
+  polygon: LatLon[]
+  drawing: boolean // map clicks add corners
+  settings: SurveySettings
 }
 
 export interface MissionEditor {
@@ -36,6 +47,21 @@ export interface MissionEditor {
 const MAX_LOGS = 500
 const MAX_MESSAGES = 300
 
+const SURVEY_SETTINGS_KEY = 'surveySettings'
+
+// Camera and flight choices are remembered between sessions; anything missing or unreadable falls back to the defaults.
+function loadSurveySettings(): SurveySettings {
+  try {
+    const stored = JSON.parse(localStorage.getItem(SURVEY_SETTINGS_KEY) ?? 'null') as Partial<SurveySettings> | null
+    if (stored && typeof stored === 'object') {
+      return { ...DEFAULT_SURVEY_SETTINGS, ...stored, camera: { ...DEFAULT_SURVEY_SETTINGS.camera, ...stored.camera } }
+    }
+  } catch {
+    // fall through to defaults
+  }
+  return DEFAULT_SURVEY_SETTINGS
+}
+
 const state: AppState = {
   connection: { status: 'disconnected' },
   telemetry: { armed: false, flightMode: 'UNKNOWN' },
@@ -44,7 +70,8 @@ const state: AppState = {
   logs: [],
   messages: [],
   trail: [],
-  mission: { items: [], home: null, selected: null, defaultAlt: 20, dirty: false, progress: null, busy: false }
+  mission: { items: [], home: null, selected: null, defaultAlt: 20, dirty: false, progress: null, busy: false },
+  survey: { polygon: [], drawing: false, settings: loadSurveySettings() }
 }
 
 const listeners = new Set<() => void>()
@@ -151,6 +178,24 @@ export function useConnection(): ConnectionState {
   return useSyncExternalStore(subscribe, () => state.connection)
 }
 
+// Re-renders only when the selected value changes, unlike useTelemetry() which re-renders on every update.
+export function useTelemetrySelector<T>(select: (t: TelemetryState) => T): T {
+  return useSyncExternalStore(subscribe, () => select(state.telemetry))
+}
+
+export function useArmed(): boolean {
+  return useTelemetrySelector((t) => t.armed)
+}
+
+export function getTelemetry(): TelemetryState {
+  return state.telemetry
+}
+
+// Calls back on every store change without re-rendering anything. Returns an unsubscribe function.
+export function subscribeToStore(listener: () => void): () => void {
+  return subscribe(listener)
+}
+
 export function useTelemetry(): TelemetryState {
   return useSyncExternalStore(subscribe, () => state.telemetry)
 }
@@ -179,6 +224,45 @@ export function useTrail(): [number, number][] {
 export function clearTrail(): void {
   state.trail = []
   emit()
+}
+
+export function useSurvey(): SurveyEditor {
+  return useSyncExternalStore(subscribe, () => state.survey)
+}
+
+function setSurvey(patch: Partial<SurveyEditor>): void {
+  state.survey = { ...state.survey, ...patch }
+  emit()
+}
+
+export const surveyActions = {
+  setDrawing(drawing: boolean): void {
+    setSurvey({ drawing })
+  },
+  addPoint(lat: number, lon: number): void {
+    setSurvey({ polygon: [...state.survey.polygon, [lat, lon]] })
+  },
+  movePoint(index: number, lat: number, lon: number): void {
+    setSurvey({ polygon: state.survey.polygon.map((p, i) => (i === index ? [lat, lon] : p)) })
+  },
+  removePoint(index: number): void {
+    setSurvey({ polygon: state.survey.polygon.filter((_, i) => i !== index) })
+  },
+  undoPoint(): void {
+    setSurvey({ polygon: state.survey.polygon.slice(0, -1) })
+  },
+  clear(): void {
+    setSurvey({ polygon: [], drawing: false })
+  },
+  updateSettings(patch: Partial<SurveySettings>): void {
+    const settings = { ...state.survey.settings, ...patch }
+    try {
+      localStorage.setItem(SURVEY_SETTINGS_KEY, JSON.stringify(settings))
+    } catch {
+      // settings just won't be remembered
+    }
+    setSurvey({ settings })
+  }
 }
 
 export function useMission(): MissionEditor {
@@ -230,6 +314,10 @@ export const missionActions = {
   replaceAll(items: MissionItem[], home: MissionItem | null, dirty: boolean): void {
     setMission({ items, home, selected: null, dirty })
   },
+  appendItems(items: MissionItem[]): void {
+    const m = state.mission
+    setMission({ items: [...m.items, ...items], selected: null, dirty: true })
+  },
   clearEditor(): void {
     setMission({ items: [], selected: null, dirty: true })
   },
@@ -277,4 +365,70 @@ export const missionActions = {
       pushMessage(`Set active waypoint failed: ${errText(err)}`, 3)
     }
   }
+}
+
+export function useParamMap(): Map<string, ParamEntry> {
+  return useSyncExternalStore(subscribe, () => state.params)
+}
+
+// Sends a vehicle command and reports failures in the messages panel. Resolves true on success.
+export async function runCommand(cmd: VehicleCommand): Promise<boolean> {
+  try {
+    await window.api.sendCommand(cmd)
+    return true
+  } catch (err) {
+    pushMessage(errText(err), 3)
+    return false
+  }
+}
+
+// ---- calibration progress (accelerometer prompts, compass calibration) ----
+
+export interface MagCalState {
+  status: number
+  attempt: number
+  percent: number
+  mask: number[]
+  report?: { status: number; fitness: number; autosaved: boolean; offsets: [number, number, number] }
+}
+
+export interface SetupState {
+  accelPosition: number | null // last position the vehicle asked for (16777215 success, 16777216 failed)
+  mag: Record<number, MagCalState>
+}
+
+const EMPTY_SETUP: SetupState = { accelPosition: null, mag: {} }
+let setupState: SetupState = EMPTY_SETUP
+
+function handleSetupEvent(event: SetupEvent): void {
+  if (event.type === 'accelPosition') {
+    setupState = { ...setupState, accelPosition: event.position }
+  } else if (event.type === 'magProgress') {
+    const prev = setupState.mag[event.compassId]
+    setupState = {
+      ...setupState,
+      mag: { ...setupState.mag, [event.compassId]: { ...prev, status: event.status, attempt: event.attempt, percent: event.percent, mask: event.mask } }
+    }
+  } else {
+    const prev = setupState.mag[event.compassId] ?? { status: event.status, attempt: 0, percent: 100, mask: [] }
+    setupState = {
+      ...setupState,
+      mag: {
+        ...setupState.mag,
+        [event.compassId]: { ...prev, status: event.status, report: { status: event.status, fitness: event.fitness, autosaved: event.autosaved, offsets: event.offsets } }
+      }
+    }
+  }
+  emit()
+}
+
+window.api.onSetupEvent(handleSetupEvent)
+
+export function resetSetupState(): void {
+  setupState = EMPTY_SETUP
+  emit()
+}
+
+export function useSetupState(): SetupState {
+  return useSyncExternalStore(subscribe, () => setupState)
 }

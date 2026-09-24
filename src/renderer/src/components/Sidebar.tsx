@@ -3,6 +3,8 @@ import type { ViewId } from '../App'
 const ITEMS: { id: ViewId; label: string; icon: string }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '◎' },
   { id: 'mission', label: 'Mission', icon: '⌖' },
+  { id: 'setup', label: 'Setup', icon: '⚙' },
+  { id: 'tuning', label: 'Tuning', icon: '∿' },
   { id: 'parameters', label: 'Parameters', icon: '≡' },
   { id: 'logs', label: 'Logs', icon: '▤' }
 ]

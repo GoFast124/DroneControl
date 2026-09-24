@@ -5,9 +5,12 @@ import Dashboard from './views/Dashboard'
 import ParametersView from './views/ParametersView'
 import LogsView from './views/LogsView'
 import MissionView from './views/MissionView'
+import SetupView from './views/SetupView'
+import TuneView from './views/TuneView'
 import ConnectionModal from './components/ConnectionModal'
+import TrafficWatcher from './components/TrafficWatcher'
 
-export type ViewId = 'dashboard' | 'mission' | 'parameters' | 'logs'
+export type ViewId = 'dashboard' | 'mission' | 'setup' | 'tuning' | 'parameters' | 'logs'
 
 export default function App(): React.JSX.Element {
   const [view, setView] = useState<ViewId>('dashboard')
@@ -21,10 +24,13 @@ export default function App(): React.JSX.Element {
         <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
           {view === 'dashboard' && <Dashboard />}
           {view === 'mission' && <MissionView />}
+          {view === 'setup' && <SetupView />}
+          {view === 'tuning' && <TuneView />}
           {view === 'parameters' && <ParametersView />}
           {view === 'logs' && <LogsView />}
         </div>
       </div>
+      <TrafficWatcher />
       {connectionModalOpen && <ConnectionModal onClose={() => setConnectionModalOpen(false)} />}
     </div>
   )

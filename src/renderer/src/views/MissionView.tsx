@@ -14,7 +14,8 @@ import {
   serializeWaypoints
 } from '../../../shared/mission'
 import type { MissionItem } from '../../../shared/mission'
-import { clearTrail, missionActions, pushMessage, useConnection, useMission, useTelemetry } from '../store'
+import SurveyPanel from '../survey/SurveyPanel'
+import { clearTrail, missionActions, pushMessage, surveyActions, useConnection, useMission, useSurvey, useTelemetry } from '../store'
 
 type Confirm = 'clear' | 'auto' | null
 
@@ -36,6 +37,8 @@ export default function MissionView(): React.JSX.Element {
   const [addMode, setAddMode] = useState(false)
   const [follow, setFollow] = useState(false)
   const [confirm, setConfirm] = useState<Confirm>(null)
+  const [panel, setPanel] = useState<'waypoints' | 'survey'>('waypoints')
+  const survey = useSurvey()
   const fileInput = useRef<HTMLInputElement>(null)
 
   const connected = connection.status === 'connected'
@@ -72,6 +75,12 @@ export default function MissionView(): React.JSX.Element {
     }
   }
 
+  function showPanel(next: 'waypoints' | 'survey'): void {
+    setPanel(next)
+    if (next === 'waypoints') surveyActions.setDrawing(false)
+    else setAddMode(false)
+  }
+
   const progress = mission.progress
   const busyText = mission.busy
     ? progress
@@ -82,10 +91,26 @@ export default function MissionView(): React.JSX.Element {
   return (
     <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
       <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
-        <MissionMap addMode={addMode} follow={follow} />
+        <MissionMap addMode={addMode} follow={follow} surveyActive={panel === 'survey'} />
         <div style={{ position: 'absolute', top: 12, left: 56, zIndex: 1000, display: 'flex', gap: 8 }}>
-          <MapButton active={addMode} onClick={() => setAddMode(!addMode)}>
+          <MapButton
+            active={addMode}
+            onClick={() => {
+              setAddMode(!addMode)
+              surveyActions.setDrawing(false)
+            }}
+          >
             {addMode ? '✚ Click map to add waypoints' : '✚ Add waypoints'}
+          </MapButton>
+          <MapButton
+            active={survey.drawing}
+            onClick={() => {
+              setPanel('survey')
+              setAddMode(false)
+              surveyActions.setDrawing(!survey.drawing)
+            }}
+          >
+            {survey.drawing ? '⬠ Click map to draw the survey area' : '⬠ Draw survey area'}
           </MapButton>
           <MapButton active={follow} onClick={() => setFollow(!follow)}>
             Follow vehicle
@@ -105,6 +130,19 @@ export default function MissionView(): React.JSX.Element {
           minHeight: 0
         }}
       >
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)' }}>
+          <PanelTab active={panel === 'waypoints'} onClick={() => showPanel('waypoints')}>
+            Waypoints
+          </PanelTab>
+          <PanelTab active={panel === 'survey'} onClick={() => showPanel('survey')}>
+            Survey grid
+          </PanelTab>
+        </div>
+
+        {panel === 'survey' ? (
+          <SurveyPanel onGenerated={() => showPanel('waypoints')} />
+        ) : (
+          <>
         <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10, borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button onClick={() => void missionActions.read()} disabled={!connected || mission.busy} style={btn}>
@@ -205,8 +243,29 @@ export default function MissionView(): React.JSX.Element {
             </button>
           ))}
         </div>
+          </>
+        )}
       </div>
     </div>
+  )
+}
+
+function PanelTab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }): React.JSX.Element {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: '10px 0',
+        border: 'none',
+        borderBottom: `2px solid ${active ? 'var(--accent)' : 'transparent'}`,
+        background: 'transparent',
+        color: active ? 'var(--accent)' : 'var(--text-1)',
+        fontWeight: 600
+      }}
+    >
+      {children}
+    </button>
   )
 }
 

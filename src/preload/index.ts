@@ -9,6 +9,7 @@ import type {
   ParamEntry,
   ParamProgress,
   SerialPortInfo,
+  SetupEvent,
   StatusMessage,
   TelemetryState,
   VehicleCommand
@@ -21,6 +22,7 @@ const api = {
   getConnectionState: (): Promise<ConnectionState> => ipcRenderer.invoke(IPC.getConnectionState),
   requestParams: (): Promise<void> => ipcRenderer.invoke(IPC.requestParams),
   setParam: (id: string, value: number): Promise<void> => ipcRenderer.invoke(IPC.setParam, id, value),
+  setOnlineTraffic: (enabled: boolean): Promise<void> => ipcRenderer.invoke(IPC.setOnlineTraffic, enabled),
   getParams: (): Promise<ParamEntry[]> => ipcRenderer.invoke(IPC.getParams),
   missionDownload: (): Promise<{ home: MissionItem | null; items: MissionItem[] }> => ipcRenderer.invoke(IPC.missionDownload),
   missionUpload: (items: MissionItem[], home: MissionItem | null): Promise<void> =>
@@ -34,6 +36,11 @@ const api = {
   },
   sendCommand: (cmd: VehicleCommand): Promise<void> => ipcRenderer.invoke(IPC.sendCommand, cmd),
 
+  onSetupEvent: (cb: (event: SetupEvent) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, event: SetupEvent): void => cb(event)
+    ipcRenderer.on(IPC.onSetupEvent, listener)
+    return () => ipcRenderer.removeListener(IPC.onSetupEvent, listener)
+  },
   onStatusMessage: (cb: (msg: StatusMessage) => void): (() => void) => {
     const listener = (_e: Electron.IpcRendererEvent, msg: StatusMessage): void => cb(msg)
     ipcRenderer.on(IPC.onStatusMessage, listener)
