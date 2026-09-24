@@ -121,12 +121,12 @@ export default function Dashboard(): React.JSX.Element {
         <TrafficCard />
       </div>
 
-      <SystemStatus />
-
       <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 1100, alignItems: 'stretch', flexWrap: 'wrap' }}>
         <FlightControls />
         <MessagesPanel />
       </div>
+
+      <SystemStatus />
     </div>
   )
 }
