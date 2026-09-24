@@ -8,6 +8,7 @@ A desktop ground control station for ArduCopter, built with Electron, React and 
 
 - **Connections:** USB/serial (choose baud rate), UDP (listen on a port, optional remote host), and TCP.
 - **Dashboard:** artificial horizon, ground speed and altitude tapes, heading ribbon, battery, GPS, position and radio readouts.
+- **Proximity radar:** top-down radar on the dashboard for 360 degree lidar scans (`OBSTACLE_DISTANCE`) and single-point distance sensors (`DISTANCE_SENSOR`, including ArduPilot's 8-sector data). Beams and scan points are coloured by distance, with a nearest-obstacle readout, up/down sensor values, a warning ring under 2 m, and auto or fixed range (2-40 m). Data that stops arriving is cleared after a couple of seconds.
 - **Flight controls:** mode selector, arm/disarm, takeoff to a chosen altitude, Land and RTL. Arm, disarm and takeoff ask for confirmation.
 - **Vehicle messages:** live feed of the vehicle's status text, colour-coded by severity, so pre-arm failures, warnings and failsafes are visible. Includes a "warnings and errors only" filter.
 - **Parameters:** load the full list, search, and edit either in a table (Enter to write) or as raw `NAME,VALUE` text. Every write is confirmed by the vehicle echoing the value back. Import and export `.param` files.
@@ -76,4 +77,5 @@ src/
 
 - Map tiles (Esri satellite, OpenStreetMap) are fetched online. There is no offline cache yet.
 - Mission uploads send plain MAVLink frame numbers (0, 3, 10) inside `MISSION_ITEM_INT`, because the ArduPilot build tested rejected the `_INT` variants. Other firmware versions may behave differently.
+- The proximity radar has only been tested with simulated MAVLink messages, since SITL has no proximity sensor configured. Check it against your real sensor and its orientation settings.
 - Not implemented yet: click-to-fly (guided goto), geofence and rally points, dataflash log download and graphing, and a live-data graphing view.

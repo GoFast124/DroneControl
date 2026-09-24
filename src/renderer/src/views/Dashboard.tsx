@@ -1,6 +1,7 @@
 import AttitudeIndicator from '../components/hud/AttitudeIndicator'
 import Tape from '../components/hud/Tape'
 import HeadingRibbon from '../components/hud/HeadingRibbon'
+import ProximityRadar from '../components/hud/ProximityRadar'
 import StatCard from '../components/StatCard'
 import FlightControls from '../components/FlightControls'
 import MessagesPanel from '../components/MessagesPanel'
@@ -52,13 +53,14 @@ export default function Dashboard(): React.JSX.Element {
 
   return (
     <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
         <Tape value={vfr?.groundspeed ?? 0} unit="m/s GND" step={5} side="left" />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
           <AttitudeIndicator rollRad={attitude.roll} pitchRad={attitude.pitch} />
           <HeadingRibbon headingDeg={headingDeg} />
         </div>
         <Tape value={pos?.relativeAlt ?? vfr?.alt ?? 0} unit="m ALT" step={10} side="right" />
+        <ProximityRadar />
       </div>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
