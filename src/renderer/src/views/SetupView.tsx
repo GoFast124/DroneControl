@@ -3,6 +3,7 @@ import { useConnection } from '../store'
 import AttitudeTab from '../setup/AttitudeTab'
 import CompassTab from '../setup/CompassTab'
 import FlightModesTab from '../setup/FlightModesTab'
+import FrameTab from '../setup/FrameTab'
 import MotorsTab from '../setup/MotorsTab'
 import RadioTab from '../setup/RadioTab'
 import SerialTab from '../setup/SerialTab'
@@ -10,6 +11,7 @@ import ServoTab from '../setup/ServoTab'
 import { useEnsureParams, useParamDraft } from '../setup/useParamDraft'
 
 const TABS = [
+  { id: 'frame', label: 'Frame type' },
   { id: 'attitude', label: 'Accelerometer & level' },
   { id: 'compass', label: 'Compass' },
   { id: 'radio', label: 'Radio calibration' },
@@ -25,7 +27,7 @@ export default function SetupView(): React.JSX.Element {
   const connection = useConnection()
   const { loaded, loading, progress } = useEnsureParams()
   const draft = useParamDraft()
-  const [tab, setTab] = useState<TabId>('attitude')
+  const [tab, setTab] = useState<TabId>('frame')
 
   if (connection.status !== 'connected') {
     return <Centered>Not connected — click Connect to link to your vehicle</Centered>
@@ -70,6 +72,7 @@ export default function SetupView(): React.JSX.Element {
         {draft.dirty && <div style={{ marginTop: 10, padding: '6px 10px', fontSize: 11, color: 'var(--warn)' }}>{draft.dirtyIds.length} unsaved change(s)</div>}
       </div>
       <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: 18 }}>
+        {tab === 'frame' && <FrameTab draft={draft} />}
         {tab === 'attitude' && <AttitudeTab draft={draft} />}
         {tab === 'compass' && <CompassTab draft={draft} />}
         {tab === 'radio' && <RadioTab draft={draft} />}

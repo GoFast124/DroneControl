@@ -3,24 +3,19 @@ import NumberField from '../components/NumberField'
 import { pushMessage, runCommand, useTelemetry, writeParam } from '../store'
 import { btn, Card, dangerBtn, Notice, ParamNumber, ParamSelect, primaryBtn, WriteBar } from './ui'
 import type { Draft } from './ui'
-import { FRAME_CLASSES, FRAME_TYPES, MOTORS_BY_FRAME_CLASS, MOT_PWM_TYPES } from './paramMeta'
+import FrameDiagram, { FrameLegend } from './FrameDiagram'
+import { frameLabel, frameTypeDef } from './frames'
+import { MOT_PWM_TYPES } from './paramMeta'
 
 const LETTERS = 'ABCDEFGHIJKL'
-
-// Motor positions (angle clockwise from the nose) in ArduPilot's test order, which runs clockwise from the front.
-function layoutAngles(frameClass: number | undefined, frameType: number | undefined): number[] | null {
-  if (frameClass !== 1) return null
-  if (frameType === 0) return [0, 90, 180, 270] // plus
-  if (frameType === 1) return [45, 135, 225, 315] // X
-  return null
-}
 
 export default function MotorsTab({ draft }: { draft: Draft }): React.JSX.Element {
   const telemetry = useTelemetry()
   const armed = telemetry.armed
   const frameClass = draft.vehicle('FRAME_CLASS')
   const frameType = draft.vehicle('FRAME_TYPE')
-  const detected = frameClass !== undefined ? MOTORS_BY_FRAME_CLASS[frameClass] : undefined
+  const frame = frameTypeDef(frameClass, frameType)
+  const detected = frame?.motors.length
   const [motorCount, setMotorCount] = useState<number | null>(null)
   const count = motorCount ?? detected ?? 4
   const [propsOff, setPropsOff] = useState(false)
@@ -28,7 +23,6 @@ export default function MotorsTab({ draft }: { draft: Draft }): React.JSX.Elemen
   const [duration, setDuration] = useState(2)
   const [escConfirm, setEscConfirm] = useState(false)
   const [escSet, setEscSet] = useState(false)
-  const angles = layoutAngles(frameClass, frameType)
   const canTest = propsOff && !armed
 
   function test(motor: number, motors = 1): void {
@@ -46,12 +40,9 @@ export default function MotorsTab({ draft }: { draft: Draft }): React.JSX.Elemen
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <Card title="Frame and motor outputs">
         <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', alignItems: 'center', fontSize: 12, color: 'var(--text-1)' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            Frame class <ParamSelect draft={draft} id="FRAME_CLASS" options={FRAME_CLASSES} width={130} />
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            Frame type <ParamSelect draft={draft} id="FRAME_TYPE" options={FRAME_TYPES} width={130} />
-          </label>
+          <span>
+            Frame: <b style={{ color: 'var(--text-0)' }}>{frameLabel(frameClass, frameType)}</b> (change it on the Frame type page)
+          </span>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             ESC protocol <ParamSelect draft={draft} id="MOT_PWM_TYPE" options={MOT_PWM_TYPES} width={110} />
           </label>
@@ -67,7 +58,7 @@ export default function MotorsTab({ draft }: { draft: Draft }): React.JSX.Elemen
             Spin maximum <ParamNumber draft={draft} id="MOT_SPIN_MAX" width={60} />
           </label>
         </div>
-        <span style={{ fontSize: 11, color: 'var(--text-2)' }}>Frame changes need a reboot. Spin values are fractions of full throttle (0.10 = 10%).</span>
+        <span style={{ fontSize: 11, color: 'var(--text-2)' }}>Spin values are fractions of full throttle (0.10 = 10%).</span>
       </Card>
 
       <Card title="Motor test">
@@ -80,23 +71,11 @@ export default function MotorsTab({ draft }: { draft: Draft }): React.JSX.Elemen
         {armed && <Notice tone="warn">Disarm the vehicle to run a motor test.</Notice>}
 
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-          {angles && (
-            <svg width={150} height={150} viewBox="-75 -75 150 150">
-              <circle r={62} fill="none" stroke="var(--border)" />
-              <polygon points="0,-34 -6,-24 6,-24" fill="var(--accent)" />
-              {angles.map((a, i) => {
-                const x = 46 * Math.sin((a * Math.PI) / 180)
-                const y = -46 * Math.cos((a * Math.PI) / 180)
-                return (
-                  <g key={i} onClick={() => canTest && test(i + 1)} style={{ cursor: canTest ? 'pointer' : 'not-allowed' }}>
-                    <circle cx={x} cy={y} r={15} fill="var(--bg-3)" stroke={canTest ? 'var(--accent)' : 'var(--border)'} />
-                    <text x={x} y={y + 5} textAnchor="middle" fontSize={14} fontWeight={700} fill="var(--text-0)">
-                      {LETTERS[i]}
-                    </text>
-                  </g>
-                )
-              })}
-            </svg>
+          {frame && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <FrameDiagram motors={frame.motors} size={260} onMotor={(m) => test(m.order)} disabled={!canTest} />
+              <FrameLegend hasDirections={frame.motors.some((m) => m.dir !== 0)} />
+            </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'center', fontSize: 12, color: 'var(--text-1)' }}>
@@ -158,7 +137,7 @@ export default function MotorsTab({ draft }: { draft: Draft }): React.JSX.Elemen
         )}
       </Card>
 
-      <WriteBar draft={draft} note="Frame changes need a reboot" />
+      <WriteBar draft={draft} />
     </div>
   )
 }

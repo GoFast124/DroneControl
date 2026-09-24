@@ -44,19 +44,6 @@ const ORIENTATION_NAMES = [
 ]
 export const ORIENTATIONS: Options = [...ORIENTATION_NAMES.map((n, i): [number, string] => [i, n]), [100, 'Custom']]
 
-export const FRAME_CLASSES: Options = [
-  [0, 'Undefined'], [1, 'Quad'], [2, 'Hexa'], [3, 'Octa'], [4, 'Octa-quad'], [5, 'Y6'], [6, 'Heli'], [7, 'Tri'],
-  [8, 'Single copter'], [9, 'Coax copter'], [10, 'Bi copter'], [11, 'Heli dual'], [12, 'Dodeca-hexa'], [13, 'Heli quad'], [14, 'Deca']
-]
-
-export const FRAME_TYPES: Options = [
-  [0, 'Plus'], [1, 'X'], [2, 'V'], [3, 'H'], [4, 'V-tail'], [5, 'A-tail'], [10, 'Y6 B'], [11, 'BetaFlight X'],
-  [12, 'DJI X'], [13, 'Clockwise X'], [14, 'I']
-]
-
-// Motors driven by each FRAME_CLASS; used to size the motor test.
-export const MOTORS_BY_FRAME_CLASS: Record<number, number> = { 1: 4, 2: 6, 3: 8, 4: 8, 5: 6, 7: 3, 8: 4, 9: 2, 10: 2, 12: 12, 14: 10 }
-
 export const MOT_PWM_TYPES: Options = [
   [0, 'Normal'], [1, 'OneShot'], [2, 'OneShot125'], [3, 'Brushed'], [4, 'DShot150'], [5, 'DShot300'],
   [6, 'DShot600'], [7, 'DShot1200'], [8, 'PWM range']

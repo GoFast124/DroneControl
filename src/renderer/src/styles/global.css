@@ -97,8 +97,10 @@ select:disabled {
   color: #fff;
 }
 
-/* Overlap tiles slightly so fractional display scaling (e.g. 125%) doesn't show seams. */
+/* Overlap tiles slightly so fractional display scaling (e.g. 125%) doesn't show seams. Leaflet's own stylesheet blends
+   tiles with plus-lighter, which would brighten the overlap into a visible line, so blend normally. */
 .leaflet-container img.leaflet-tile {
   width: 256.7px !important;
   height: 256.7px !important;
+  mix-blend-mode: normal !important;
 }

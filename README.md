@@ -7,19 +7,20 @@ A desktop ground control station for ArduCopter, built with Electron, React and 
 ## Features
 
 - **Connections:** USB/serial (choose baud rate), UDP (listen on a port, optional remote host), and TCP.
-- **Dashboard:** artificial horizon, ground speed and altitude tapes, heading ribbon, battery, GPS, position and radio readouts, plus a square satellite map that follows the aircraft (with its trail and the mission path). The map and the radar can each be hidden and the choice is remembered.
+- **Dashboard:** artificial horizon, ground speed and altitude tapes, heading ribbon, battery, GPS, position and radio readouts, plus a square satellite map (left of the horizon) that follows the aircraft (with its trail and the mission path). The map and the radar can each be hidden and the choice is remembered.
 - **Proximity radar:** top-down radar on the dashboard for 360 degree lidar scans (`OBSTACLE_DISTANCE`) and single-point distance sensors (`DISTANCE_SENSOR`, including ArduPilot's 8-sector data). Beams and scan points are coloured by distance, with a nearest-obstacle readout, up/down sensor values, a warning ring under 2 m, and auto or fixed range (2-40 m). Data that stops arriving is cleared after a couple of seconds.
 - **Flight controls:** mode selector, arm/disarm, takeoff to a chosen altitude, Land and RTL. Arm, disarm and takeoff ask for confirmation.
 - **Vehicle messages:** live feed of the vehicle's status text, colour-coded by severity, so pre-arm failures, warnings and failsafes are visible. Includes a "warnings and errors only" filter.
 - **Parameters:** load the full list, search, and edit either in a table (Enter to write) or as raw `NAME,VALUE` text. Every write is confirmed by the vehicle echoing the value back. Import and export `.param` files.
-- **Setup:** the equivalent of Mission Planner's setup tab, in seven pages.
+- **Setup:** the equivalent of Mission Planner's setup tab, in eight pages.
+  - *Frame type:* choose the frame class and type (Quad, Hexa, Octa, Octa-quad, Y6, Dodeca-hexa, Deca, Tricopter and others) from motor-layout diagrams showing each motor's number, propeller direction and motor-test letter, then write it and reboot. The layouts come from ArduPilot's motor matrix source; which types a vehicle accepts depends on its firmware version.
   - *Accelerometer & level:* live attitude, level trim, the six-position accelerometer calibration, gyro and barometer calibration.
   - *Compass:* detected compasses, use/orientation settings, and onboard calibration with per-compass progress, sphere coverage and the fitness report.
   - *Radio calibration:* live channel bars with stored min/trim/max, a stick calibration wizard, and reverse toggles.
   - *Servo outputs:* live output bars and function/min/trim/max/reverse for every output.
   - *Flight modes:* mode assignment for the six switch positions, simple/super-simple, with the active slot highlighted from the live switch.
   - *Serial ports:* protocol and baud rate per port, and a reboot button.
-  - *Motors & ESC:* frame and ESC protocol, a motor test (propeller confirmation required, disarmed only, throttle capped at 30%), and ESC calibration.
+  - *Motors & ESC:* ESC protocol and spin limits, a motor test you can run by clicking a motor on the frame diagram (propeller confirmation required, disarmed only, throttle capped at 30%), and ESC calibration.
 - **Tuning:** slider-based editing of the roll/pitch/yaw rate PIDs, angle P, ACRO rates and expo, pilot input limits and motor thrust. A tick on each slider marks the value currently on the vehicle, roll and pitch can be linked, and writes are confirmed by the vehicle. A live graph compares actual and target roll/pitch/yaw (rate or angle) and shows the P/I/D/FF terms when PID data is enabled, alongside an ACRO stick-response curve.
 - **Mission planning:** satellite/street map with the live vehicle marker and trail. Click to add waypoints, drag to move them, and edit commands and parameters in a list. Read, write and clear the mission on the vehicle, set the active waypoint, and import/export `.waypoints` files (the Mission Planner format).
 - **Logs:** live MAVLink message stream with filtering.

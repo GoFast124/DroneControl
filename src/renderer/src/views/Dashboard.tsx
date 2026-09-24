@@ -58,17 +58,17 @@ export default function Dashboard(): React.JSX.Element {
   return (
     <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {showMap ? (
+          <MiniMap onHide={() => setShowMap(false)} />
+        ) : (
+          <ShowButton onClick={() => setShowMap(true)}>Show map</ShowButton>
+        )}
         <Tape value={vfr?.groundspeed ?? 0} unit="m/s GND" step={5} side="left" />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
           <AttitudeIndicator rollRad={attitude.roll} pitchRad={attitude.pitch} />
           <HeadingRibbon headingDeg={headingDeg} />
         </div>
         <Tape value={pos?.relativeAlt ?? vfr?.alt ?? 0} unit="m ALT" step={10} side="right" />
-        {showMap ? (
-          <MiniMap onHide={() => setShowMap(false)} />
-        ) : (
-          <ShowButton onClick={() => setShowMap(true)}>Show map</ShowButton>
-        )}
         {showRadar ? (
           <ProximityRadar onHide={() => setShowRadar(false)} />
         ) : (
