@@ -3,12 +3,25 @@ import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { SerialPort } from 'serialport'
 import { MavlinkLink } from './mavlink/link'
+import type { MavlinkLinkEvents } from './mavlink/link'
 import { getStationLocation } from './location'
 import { IPC } from '../shared/types'
 import type { ConnectionConfig, VehicleCommand } from '../shared/types'
 import type { MissionItem } from '../shared/mission'
 
 const link = new MavlinkLink()
+
+// Link events that are passed on to the window, and the IPC channel each one uses.
+const LINK_EVENTS: [keyof MavlinkLinkEvents, string][] = [
+  ['connection-state', IPC.onConnectionState],
+  ['telemetry', IPC.onTelemetry],
+  ['param-progress', IPC.onParamProgress],
+  ['param-update', IPC.onParamUpdate],
+  ['log', IPC.onLog],
+  ['mission-progress', IPC.onMissionProgress],
+  ['setup-event', IPC.onSetupEvent],
+  ['status-message', IPC.onStatusMessage]
+]
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -29,14 +42,19 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
-  link.on('connection-state', (state) => mainWindow.webContents.send(IPC.onConnectionState, state))
-  link.on('telemetry', (state) => mainWindow.webContents.send(IPC.onTelemetry, state))
-  link.on('param-progress', (progress) => mainWindow.webContents.send(IPC.onParamProgress, progress))
-  link.on('param-update', (param) => mainWindow.webContents.send(IPC.onParamUpdate, param))
-  link.on('log', (entry) => mainWindow.webContents.send(IPC.onLog, entry))
-  link.on('mission-progress', (p) => mainWindow.webContents.send(IPC.onMissionProgress, p))
-  link.on('setup-event', (event) => mainWindow.webContents.send(IPC.onSetupEvent, event))
-  link.on('status-message', (msg) => mainWindow.webContents.send(IPC.onStatusMessage, msg))
+  // Forward the vehicle link's events to this window. The link keeps running timers of its own (telemetry is sent on a
+  // short delay), so an event can arrive just after the window has been closed; sending to a destroyed window throws,
+  // so check first and stop forwarding once the window is gone.
+  const forwarded: [keyof MavlinkLinkEvents, (payload: unknown) => void][] = LINK_EVENTS.map(([event, channel]) => [
+    event,
+    (payload) => {
+      if (!mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) mainWindow.webContents.send(channel, payload)
+    }
+  ])
+  for (const [event, handler] of forwarded) link.on(event, handler)
+  mainWindow.on('closed', () => {
+    for (const [event, handler] of forwarded) link.off(event, handler)
+  })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])

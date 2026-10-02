@@ -81,7 +81,7 @@ export default function Dashboard(): React.JSX.Element {
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
         <StatCard
           title="Battery"
           rows={[
@@ -118,12 +118,12 @@ export default function Dashboard(): React.JSX.Element {
             { label: 'Climb', value: vfr ? `${vfr.climb.toFixed(1)} m/s` : '—' }
           ]}
         />
-        <TrafficCard />
       </div>
 
       <div style={{ display: 'flex', gap: 12, width: '100%', maxWidth: 1100, alignItems: 'stretch', flexWrap: 'wrap' }}>
         <FlightControls />
         <MessagesPanel />
+        <TrafficCard />
       </div>
 
       <SystemStatus />
