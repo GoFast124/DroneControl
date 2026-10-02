@@ -10,6 +10,7 @@ import type {
   ParamProgress,
   SerialPortInfo,
   SetupEvent,
+  StationLocationResult,
   StatusMessage,
   TelemetryState,
   VehicleCommand
@@ -22,6 +23,9 @@ const api = {
   getConnectionState: (): Promise<ConnectionState> => ipcRenderer.invoke(IPC.getConnectionState),
   requestParams: (): Promise<void> => ipcRenderer.invoke(IPC.requestParams),
   setParam: (id: string, value: number): Promise<void> => ipcRenderer.invoke(IPC.setParam, id, value),
+  getStationLocation: (): Promise<StationLocationResult> => ipcRenderer.invoke(IPC.getStationLocation),
+  setTrafficStation: (pos: { lat: number; lon: number } | null): Promise<void> => ipcRenderer.invoke(IPC.setTrafficStation, pos),
+  setTrafficRange: (km: number): Promise<void> => ipcRenderer.invoke(IPC.setTrafficRange, km),
   setOnlineTraffic: (enabled: boolean): Promise<void> => ipcRenderer.invoke(IPC.setOnlineTraffic, enabled),
   getParams: (): Promise<ParamEntry[]> => ipcRenderer.invoke(IPC.getParams),
   missionDownload: (): Promise<{ home: MissionItem | null; items: MissionItem[] }> => ipcRenderer.invoke(IPC.missionDownload),

@@ -115,8 +115,14 @@ export class MavlinkLink extends EventEmitter {
   private vehicleTraffic = new Map<string, Aircraft>()
   private onlineTraffic: FeedResult = { aircraft: [] }
   private onlineUpdatedAt: number | undefined
+  private stationPosition: { lat: number; lon: number } | undefined
   private onlineFeed = new OnlineTrafficFeed(
-    () => this.telemetry.globalPosition,
+    () => {
+      const p = this.telemetry.globalPosition
+      if (p && (p.lat !== 0 || p.lon !== 0)) return p
+      // No GPS position from the vehicle yet: search around the base station, but only while there is a vehicle link.
+      return this.connectionState.status === 'connected' ? this.stationPosition : undefined
+    },
     (result) => {
       this.onlineTraffic = result
       this.onlineUpdatedAt = Date.now()
@@ -358,7 +364,9 @@ export class MavlinkLink extends EventEmitter {
   }
 
   private setConnectionState(patch: Partial<ConnectionState>): void {
-    this.connectionState = { ...this.connectionState, ...patch }
+    // An error belongs to the failure it was raised for: any other state change (connecting, connected, disconnected) clears it.
+    const error = patch.status === 'error' ? patch.error : undefined
+    this.connectionState = { ...this.connectionState, ...patch, error }
     this.emit('connection-state', this.connectionState)
   }
 
@@ -685,6 +693,17 @@ export class MavlinkLink extends EventEmitter {
   }
 
   // Turns the online feed on or off. The feed needs the vehicle's position, so it idles until there is one.
+  setTrafficStation(pos: { lat: number; lon: number } | null): void {
+    const next = pos && Number.isFinite(pos.lat) && Number.isFinite(pos.lon) ? { lat: pos.lat, lon: pos.lon } : undefined
+    if (next?.lat === this.stationPosition?.lat && next?.lon === this.stationPosition?.lon) return
+    this.stationPosition = next
+    this.onlineFeed.pollSoon()
+  }
+
+  setTrafficRange(km: number): void {
+    if (Number.isFinite(km) && km > 0) this.onlineFeed.setRangeKm(km)
+  }
+
   setOnlineTraffic(enabled: boolean): void {
     if (enabled) this.onlineFeed.start()
     else {

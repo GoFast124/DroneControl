@@ -3,8 +3,8 @@ import type { Aircraft } from '../../shared/types'
 // Optional feed of nearby ADS-B traffic from adsb.lol (free, no key). It is opt-in because it sends the vehicle's
 // approximate position to that service. The position is rounded to ~1 km and the search radius widened to compensate.
 const ENDPOINT = 'https://api.adsb.lol/v2/point'
-const RADIUS_NM = 7
-const POLL_MS = 5000
+const NM_PER_KM = 1 / 1.852
+const MAX_RADIUS_NM = 250 // the service's limit
 const TIMEOUT_MS = 8000
 // The service rejects generic user agents and asks clients to identify themselves.
 const USER_AGENT = 'DroneControl/0.1 (+https://github.com/GoFast124/DroneControl)'
@@ -55,6 +55,10 @@ export function parseAircraft(raw: RawAircraft, now: number): Aircraft | null {
 
 export class OnlineTrafficFeed {
   private timer: NodeJS.Timeout | null = null
+  private radiusNm = 7
+  private pollMs = 5000
+  private pausedUntil = 0
+  private kick: NodeJS.Timeout | null = null
   private inFlight: AbortController | null = null
 
   constructor(
@@ -68,19 +72,45 @@ export class OnlineTrafficFeed {
 
   start(): void {
     if (this.timer) return
-    this.timer = setInterval(() => void this.poll(), POLL_MS)
+    this.timer = setInterval(() => void this.poll(), this.pollMs)
     void this.poll()
+  }
+
+  // Ask for aircraft out to `km` from the vehicle (plus a margin for the rounded position).
+  // Wider searches return more data, so they are polled less often.
+  setRangeKm(km: number): void {
+    this.radiusNm = Math.max(2, Math.min(MAX_RADIUS_NM, Math.ceil(km * NM_PER_KM) + 1))
+    this.pollMs = km > 20 ? 10_000 : 5000
+    if (!this.timer) return
+    this.inFlight?.abort()
+    this.inFlight = null
+    clearInterval(this.timer)
+    this.timer = setInterval(() => void this.poll(), this.pollMs)
+    this.pollSoon()
+  }
+
+  // Fetch shortly, once, however many times this is asked for in quick succession (flicking through the range options,
+  // or the search centre changing), instead of one request per change.
+  pollSoon(): void {
+    if (!this.timer) return
+    if (this.kick) clearTimeout(this.kick)
+    this.kick = setTimeout(() => {
+      this.kick = null
+      void this.poll()
+    }, 1500)
   }
 
   stop(): void {
     if (this.timer) clearInterval(this.timer)
     this.timer = null
+    if (this.kick) clearTimeout(this.kick)
+    this.kick = null
     this.inFlight?.abort()
     this.inFlight = null
   }
 
   private async poll(): Promise<void> {
-    if (this.inFlight) return
+    if (this.inFlight || Date.now() < this.pausedUntil) return
     const pos = this.getPosition()
     if (!pos || (pos.lat === 0 && pos.lon === 0)) {
       this.onResult({ aircraft: [], error: 'Waiting for a GPS position' })
@@ -90,8 +120,12 @@ export class OnlineTrafficFeed {
     this.inFlight = controller
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
     try {
-      const url = `${ENDPOINT}/${pos.lat.toFixed(2)}/${pos.lon.toFixed(2)}/${RADIUS_NM}`
+      const url = `${ENDPOINT}/${pos.lat.toFixed(2)}/${pos.lon.toFixed(2)}/${this.radiusNm}`
       const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': USER_AGENT } })
+      if (res.status === 429) {
+        this.pausedUntil = Date.now() + 20_000 // back off rather than keep hitting a service that has asked us to slow down
+        throw new Error('the service is rate limiting requests, will retry')
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const body = (await res.json()) as { ac?: RawAircraft[] }
       const now = Date.now()

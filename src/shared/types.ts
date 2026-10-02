@@ -202,6 +202,9 @@ export interface PowerData {
   vservo: number // servo rail, volts
 }
 
+// Position of the base station (the computer running the app), for centring maps when the vehicle has no GPS fix.
+export type StationLocationResult = { ok: true; lat: number; lon: number; accuracy: number } | { ok: false; error: string }
+
 export interface TelemetryState {
   sensors?: SensorStatus
   ekf?: EkfData
@@ -304,6 +307,9 @@ export const IPC = {
   requestParams: 'link:request-params',
   setParam: 'link:set-param',
   setOnlineTraffic: 'traffic:set-online',
+  setTrafficRange: 'traffic:set-range',
+  setTrafficStation: 'traffic:set-station',
+  getStationLocation: 'station:get-location',
   getParams: 'link:get-params',
 
   onConnectionState: 'link:connection-state',
