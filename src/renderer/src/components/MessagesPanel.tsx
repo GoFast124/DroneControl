@@ -56,7 +56,7 @@ export default function MessagesPanel(): React.JSX.Element {
           const el = e.currentTarget
           stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24
         }}
-        style={{ flex: 1, minHeight: 200, maxHeight: 260, overflowY: 'auto', fontFamily: 'var(--mono)', fontSize: 12 }}
+        style={{ flex: '1 1 0', minHeight: 200, overflow: 'auto', fontFamily: 'var(--mono)', fontSize: 12 }}
       >
         {shown.map((m, i) => (
           <div
@@ -64,6 +64,10 @@ export default function MessagesPanel(): React.JSX.Element {
             style={{
               display: 'flex',
               gap: 10,
+              // Each message stays on one line; the panel scrolls sideways to read a long one.
+              whiteSpace: 'nowrap',
+              width: 'max-content',
+              minWidth: '100%',
               padding: '3px 12px',
               borderLeft: `3px solid ${m.severity <= 4 ? severityColor(m.severity) : 'transparent'}`,
               background: m.severity <= 3 ? 'rgba(239,87,87,0.08)' : 'transparent'
