@@ -3,6 +3,7 @@ import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { SerialPort } from 'serialport'
 import { MavlinkLink } from './mavlink/link'
+import { getStationLocation } from './location'
 import { IPC } from '../shared/types'
 import type { ConnectionConfig, VehicleCommand } from '../shared/types'
 import type { MissionItem } from '../shared/mission'
@@ -99,6 +100,9 @@ app.whenReady().then(() => {
     await link.setParam(id, value)
   })
 
+  ipcMain.handle(IPC.getStationLocation, () => getStationLocation())
+  ipcMain.handle(IPC.setTrafficStation, (_event, pos: { lat: number; lon: number } | null) => link.setTrafficStation(pos))
+  ipcMain.handle(IPC.setTrafficRange, (_event, km: number) => link.setTrafficRange(Number(km)))
   ipcMain.handle(IPC.setOnlineTraffic, (_event, enabled: boolean) => link.setOnlineTraffic(!!enabled))
   ipcMain.handle(IPC.getParams, () => link.getParams())
 

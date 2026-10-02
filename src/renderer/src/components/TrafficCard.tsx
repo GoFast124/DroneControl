@@ -1,13 +1,16 @@
 import { useTelemetry } from '../store'
+import { useTrafficCentre } from '../trafficCentre'
 import {
   ONLINE_TRAFFIC_KEY,
   THREAT_COLORS,
-  TRAFFIC_RANGE_M,
+  TRAFFIC_RANGES_KM,
   aircraftName,
   compassPoint,
   formatDistance,
-  formatRelAlt,
-  nearbyTraffic
+  formatHeight,
+  nearbyTraffic,
+  setTrafficRangeKm,
+  useTrafficRangeKm
 } from '../traffic'
 
 const LIST_LENGTH = 4
@@ -15,9 +18,11 @@ const LIST_LENGTH = 4
 // Status box listing the nearest aircraft, styled like the other dashboard cards.
 export default function TrafficCard(): React.JSX.Element {
   const telemetry = useTelemetry()
-  const { nearby, onGround } = nearbyTraffic(telemetry)
+  const rangeKm = useTrafficRangeKm()
+  const centre = useTrafficCentre()
+  const { nearby, onGround } = nearbyTraffic(telemetry.traffic?.aircraft, centre, rangeKm * 1000)
   const online = telemetry.traffic?.online
-  const hasPosition = !!telemetry.globalPosition && (telemetry.globalPosition.lat !== 0 || telemetry.globalPosition.lon !== 0)
+  const hasPosition = !!centre
   const fromVehicle = telemetry.traffic?.aircraft.some((a) => a.source === 'vehicle') ?? false
 
   function toggleOnline(enabled: boolean): void {
@@ -32,14 +37,34 @@ export default function TrafficCard(): React.JSX.Element {
   return (
     <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, width: 290 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-        <span style={{ fontSize: 10, color: 'var(--text-2)', letterSpacing: 0.5 }}>TRAFFIC WITHIN {TRAFFIC_RANGE_M / 1000} KM</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--text-2)', letterSpacing: 0.5 }}>
+          TRAFFIC WITHIN
+          <select
+            value={rangeKm}
+            onChange={(e) => setTrafficRangeKm(Number(e.target.value))}
+            title="How far out to show aircraft"
+            style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 4px', color: 'var(--text-0)', fontSize: 11 }}
+          >
+            {TRAFFIC_RANGES_KM.map((km) => (
+              <option key={km} value={km}>
+                {km} km
+              </option>
+            ))}
+          </select>
+        </span>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-1)' }}>{nearby.length}</span>
       </div>
+
+      {centre?.source === 'station' && (
+        <div style={{ fontSize: 10, color: 'var(--text-2)', marginBottom: 6 }}>
+          Measured from the base station (the vehicle has no GPS position yet)
+        </div>
+      )}
 
       {nearby.length === 0 ? (
         <div style={{ color: 'var(--text-2)', fontSize: 11, lineHeight: 1.5, minHeight: 40 }}>
           {!hasPosition
-            ? 'Waiting for a GPS position'
+            ? 'Waiting for a GPS position from the vehicle or the base station'
             : online?.enabled || fromVehicle
               ? 'No aircraft nearby'
               : 'No aircraft data. The vehicle has no ADS-B receiver reporting; turn on the online feed to see nearby traffic.'}
@@ -69,7 +94,7 @@ export default function TrafficCard(): React.JSX.Element {
                     </span>
                   </div>
                   <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-1)' }}>
-                    {compassPoint(a.bearing)} · {formatRelAlt(a.relAlt)}
+                    {compassPoint(a.bearing)} · {formatHeight(a)}
                     {a.speed !== undefined && ` · ${Math.round(a.speed * 3.6)} km/h`}
                     {a.climb !== undefined && Math.abs(a.climb) >= 1 && ` · ${a.climb > 0 ? '↗' : '↘'}`}
                   </div>
