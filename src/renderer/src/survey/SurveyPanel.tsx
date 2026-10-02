@@ -309,7 +309,7 @@ function Segmented<T extends string>({ value, onChange, options }: { value: T; o
           style={{
             ...btn,
             flex: 1,
-            borderRadius: i === 0 ? '6px 0 0 6px' : i === options.length - 1 ? '0 6px 6px 0' : 0,
+            borderRadius: i === 0 ? 'var(--radius-md) 0 0 var(--radius-md)' : i === options.length - 1 ? '0 var(--radius-md) var(--radius-md) 0' : 0,
             marginLeft: i ? -1 : 0,
             borderColor: value === o.value ? 'var(--accent)' : 'var(--border)',
             color: value === o.value ? 'var(--accent)' : 'var(--text-1)',
@@ -334,7 +334,7 @@ function Stat({ label, value }: { label: string; value: string }): React.JSX.Ele
 
 const btn: React.CSSProperties = {
   padding: '6px 12px',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   border: '1px solid var(--border)',
   background: 'transparent',
   color: 'var(--text-0)',
@@ -344,7 +344,7 @@ const btn: React.CSSProperties = {
 const input: React.CSSProperties = {
   background: 'var(--bg-1)',
   border: '1px solid var(--border)',
-  borderRadius: 4,
+  borderRadius: 'var(--radius-sm)',
   padding: '5px 6px',
   color: 'var(--text-0)'
 }
@@ -355,6 +355,6 @@ const readout: React.CSSProperties = {
   gap: '8px 12px',
   background: 'var(--bg-2)',
   border: '1px solid var(--border)',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   padding: 10
 }

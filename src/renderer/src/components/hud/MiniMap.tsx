@@ -247,7 +247,7 @@ export default function MiniMap({ onHide }: { onHide: () => void }): React.JSX.E
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-      <div style={{ position: 'relative', width: SIZE, height: SIZE, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
+      <div style={{ position: 'relative', width: SIZE, height: SIZE, borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--border)' }}>
         <div ref={container} style={{ position: 'absolute', inset: 0, background: 'var(--bg-0)' }} />
         {!hasFix && !stationFound && (
           <div
@@ -262,7 +262,7 @@ export default function MiniMap({ onHide }: { onHide: () => void }): React.JSX.E
               gap: 6,
               padding: 16,
               textAlign: 'center',
-              background: 'rgba(10,14,20,0.7)',
+              background: 'var(--overlay-dim)',
               color: 'var(--text-1)',
               fontSize: 12,
               pointerEvents: 'none'
@@ -282,8 +282,8 @@ export default function MiniMap({ onHide }: { onHide: () => void }): React.JSX.E
               bottom: 22,
               zIndex: 500,
               padding: '4px 8px',
-              borderRadius: 4,
-              background: 'rgba(10,14,20,0.85)',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--overlay-bg)',
               color: 'var(--text-1)',
               fontSize: 11,
               textAlign: 'center',
@@ -326,7 +326,7 @@ function smallBtn(active: boolean): React.CSSProperties {
   return {
     background: active ? 'var(--accent-dim)' : 'transparent',
     border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
-    borderRadius: 4,
+    borderRadius: 'var(--radius-sm)',
     padding: '3px 8px',
     color: active ? 'var(--accent)' : 'var(--text-1)'
   }

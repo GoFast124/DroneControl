@@ -1,19 +1,282 @@
+/* ---- Themes ----
+   The colours, corner radii and fonts below are what a theme changes; everything in the app reads them through these
+   variables. :root is the default dark theme, and [data-theme='...'] blocks override only what differs. The list of
+   themes the user can pick is in src/renderer/src/themes.ts. */
 :root {
-  --bg-0: #0a0e14;
-  --bg-1: #10151d;
-  --bg-2: #161d27;
-  --bg-3: #1e2733;
+  color-scheme: dark; /* makes native controls (dropdown lists, scrollbars) match */
+
+  --bg-0: #0a0e14; /* app background */
+  --bg-1: #10151d; /* side and top bars */
+  --bg-2: #161d27; /* cards and panels */
+  --bg-3: #1e2733; /* hovered, selected and raised */
   --border: #2a3441;
   --text-0: #e8edf4;
   --text-1: #9aa7b8;
   --text-2: #64707f;
   --accent: #3ecfff;
-  --accent-dim: #1c5b6e;
+  --accent-dim: #1c5b6e; /* background of an active accent control */
   --good: #33d17a;
   --warn: #f5b942;
   --bad: #ef5757;
+
+  --series-roll: #3ecfff; /* roll / pitch / yaw in the tuning charts and sliders */
+  --series-pitch: #f5b942;
+  --series-yaw: #33d17a;
+  --cw: #3ecfff; /* clockwise / counter-clockwise propellers in the frame diagram */
+  --ccw: #f5b942;
+  --overlay-bg: rgba(10, 14, 20, 0.85); /* panels and buttons drawn over a map */
+  --overlay-dim: rgba(10, 14, 20, 0.7);
+  --scroll-thumb: var(--bg-3);
+  --focus: var(--accent);
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-pill: 14px;
+
+  --button-shadow: none;
+  --button-shadow-pressed: none;
+  --field-shadow: none;
+
   --mono: 'Cascadia Code', 'JetBrains Mono', Consolas, 'SF Mono', monospace;
   --sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-size: 13px;
+
+  /* The top bar and side bar can use their own colours (the Windows XP theme has a blue title bar). By default they
+     are the same as everywhere else. */
+  --topbar-bg: var(--bg-1);
+  --sidebar-bg: var(--bg-1);
+  --chrome-border: var(--border);
+  --chrome-text-0: var(--text-0);
+  --chrome-text-1: var(--text-1);
+  --chrome-text-2: var(--text-2);
+  --chrome-accent: var(--accent);
+  --chrome-accent-dim: var(--accent-dim);
+  --chrome-active: var(--bg-3);
+  --chrome-good: var(--good);
+  --chrome-warn: var(--warn);
+  --chrome-bad: var(--bad);
+  --chrome-field-bg: var(--bg-2);
+}
+
+/* Light: white background, dark text. Text and status colours are all at least 4.5:1 against the white and grey surfaces. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg-0: #ffffff;
+  --bg-1: #eef1f5;
+  --bg-2: #f5f7fa;
+  --bg-3: #e1e7ee;
+  --border: #c3ccd8;
+  --text-0: #111c2a;
+  --text-1: #3c4a5c;
+  --text-2: #566478;
+  --accent: #0a63a8;
+  --accent-dim: #cfe6f7;
+  --good: #0e7434;
+  --warn: #8c5200;
+  --bad: #c4262e;
+  --series-roll: #0a63a8;
+  --series-pitch: #935500;
+  --series-yaw: #0e7434;
+  --cw: #0a63a8;
+  --ccw: #935500;
+  --overlay-bg: rgba(255, 255, 255, 0.92);
+  --overlay-dim: rgba(255, 255, 255, 0.78);
+  --scroll-thumb: #b8c2cf;
+}
+
+/* Windows XP (Luna): beige window face, white fields, navy accent, blue title bar, square corners, Tahoma. */
+:root[data-theme='xp'] {
+  color-scheme: light;
+  --bg-0: #ece9d8;
+  --bg-1: #ece9d8;
+  --bg-2: #ffffff;
+  --bg-3: #d9e4f8;
+  --border: #7f9db9;
+  --text-0: #000000;
+  --text-1: #2b2b2b;
+  --text-2: #5a5a5a;
+  --accent: #0a246a;
+  --accent-dim: #b9cdf0;
+  --good: #176b17;
+  --warn: #874d00;
+  --bad: #c00000;
+  --series-roll: #0a4fb4;
+  --series-pitch: #935500;
+  --series-yaw: #176b17;
+  --cw: #0a4fb4;
+  --ccw: #935500;
+  --overlay-bg: rgba(255, 255, 255, 0.92);
+  --overlay-dim: rgba(255, 255, 255, 0.78);
+  --scroll-thumb: #c1bba5;
+  --focus: #316ac5;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-pill: 0;
+  --button-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #aca899;
+  --button-shadow-pressed: inset 1px 1px 0 #aca899, inset -1px -1px 0 #ffffff;
+  --field-shadow: inset 1px 1px 0 #d4d0c8;
+  --mono: 'Lucida Console', Consolas, monospace;
+  --sans: Tahoma, 'Segoe UI', sans-serif;
+  --font-size: 12px;
+  --topbar-bg: linear-gradient(180deg, #2a7be6 0%, #0a5be8 12%, #0054e3 55%, #0a4ed4 90%, #0840b0 100%);
+  --sidebar-bg: linear-gradient(180deg, #7ba2e7 0%, #6375d6 100%);
+  --chrome-border: #0a2a8a;
+  --chrome-text-0: #ffffff;
+  --chrome-text-1: #eaf1ff;
+  --chrome-text-2: #c9d8f7;
+  --chrome-accent: #ffffff;
+  --chrome-accent-dim: rgba(255, 255, 255, 0.22);
+  --chrome-active: rgba(255, 255, 255, 0.3);
+  --chrome-good: #a6ffa6;
+  --chrome-warn: #ffe27a;
+  --chrome-bad: #ffc9c9;
+  --chrome-field-bg: #0842b8;
+}
+
+/* Mission Planner: the black and lime-green look of the Windows program (its BurntKermit theme). The colours were sampled
+   from a screenshot of it. Controls there are flat and square, so the corners are too. */
+:root[data-theme='mp'] {
+  color-scheme: dark;
+  --bg-0: #262728;
+  --bg-1: #1c1817;
+  --bg-2: #2f3031;
+  --bg-3: #434445;
+  --border: #55575a;
+  --text-0: #ffffff;
+  --text-1: #dcdcdc;
+  --text-2: #bcbdbf;
+  --accent: #b0d158;
+  --accent-dim: #3f5010;
+  --good: #6edc5a;
+  --warn: #f5b942;
+  --bad: #ff9686;
+  --series-roll: #b0d158;
+  --series-pitch: #f5b942;
+  --series-yaw: #4aa3ff;
+  --cw: #b0d158;
+  --ccw: #f5b942;
+  --overlay-bg: rgba(28, 24, 23, 0.9);
+  --overlay-dim: rgba(28, 24, 23, 0.74);
+  --scroll-thumb: #5d5e60;
+  --focus: #4aa3ff;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-pill: 0;
+  --topbar-bg: #1c1817;
+  --sidebar-bg: #000000;
+  --chrome-border: #3a3a3b;
+  --chrome-accent: #ffffff;
+  --chrome-accent-dim: #769a15;
+  --chrome-active: #769a15;
+  --chrome-good: #6edc5a;
+  --chrome-field-bg: #434445;
+}
+
+/* High contrast: black and white with bright accents, strong borders and a thick focus ring. Meant for low vision;
+   it does not make the app usable with a screen reader. */
+:root[data-theme='contrast'] {
+  color-scheme: dark;
+  --bg-0: #000000;
+  --bg-1: #000000;
+  --bg-2: #0a0a0a;
+  --bg-3: #2a2a2a;
+  --border: #ffffff;
+  --text-0: #ffffff;
+  --text-1: #ffffff;
+  --text-2: #e0e0e0;
+  --accent: #4df0ff;
+  --accent-dim: #003f4a;
+  --good: #4dff88;
+  --warn: #ffd400;
+  --bad: #ff9d9d;
+  --series-roll: #4df0ff;
+  --series-pitch: #ffd400;
+  --series-yaw: #4dff88;
+  --cw: #4df0ff;
+  --ccw: #ffd400;
+  --overlay-bg: rgba(0, 0, 0, 0.93);
+  --overlay-dim: rgba(0, 0, 0, 0.82);
+  --scroll-thumb: #9a9a9a;
+  --focus: #ffee00;
+  --font-size: 14px;
+}
+
+/* Colour variants of the dark theme: the same layout, tinted backgrounds and a different accent. */
+:root[data-theme='red'] {
+  --bg-0: #150a0c;
+  --bg-1: #1d1013;
+  --bg-2: #27161a;
+  --bg-3: #351d22;
+  --border: #4d2b31;
+  --text-0: #f7eaec;
+  --text-1: #cdacb1;
+  --text-2: #a08488;
+  --bad: #ff7272;
+  --accent: #ff6f7d;
+  --accent-dim: #52202a;
+  --series-roll: #ff6f7d;
+  --cw: #ff6f7d;
+  --overlay-bg: rgba(21, 10, 12, 0.88);
+  --overlay-dim: rgba(21, 10, 12, 0.72);
+}
+
+:root[data-theme='green'] {
+  --bg-0: #08130d;
+  --bg-1: #0e1c14;
+  --bg-2: #14281c;
+  --bg-3: #1c3727;
+  --border: #284c36;
+  --text-0: #e8f5ec;
+  --text-1: #a9cab4;
+  --text-2: #88aa94;
+  --bad: #ff7272;
+  --accent: #3ddc84;
+  --accent-dim: #175233;
+  --series-roll: #3ddc84;
+  --cw: #3ddc84;
+  --overlay-bg: rgba(8, 19, 13, 0.88);
+  --overlay-dim: rgba(8, 19, 13, 0.72);
+}
+
+:root[data-theme='orange'] {
+  --bg-0: #140e07;
+  --bg-1: #1d140a;
+  --bg-2: #281c0f;
+  --bg-3: #382814;
+  --border: #53401f;
+  --text-0: #f8f0e4;
+  --text-1: #d0b897;
+  --text-2: #aa9370;
+  --bad: #ff7272;
+  --accent: #ff9a3d;
+  --accent-dim: #623810;
+  --series-roll: #ff9a3d;
+  --cw: #ff9a3d;
+  --overlay-bg: rgba(20, 14, 7, 0.88);
+  --overlay-dim: rgba(20, 14, 7, 0.72);
+}
+
+/* Parts of the top and side bars read the chrome-* colours instead of the page ones. */
+.chrome-bar {
+  --border: var(--chrome-border);
+  --text-0: var(--chrome-text-0);
+  --text-1: var(--chrome-text-1);
+  --text-2: var(--chrome-text-2);
+  --accent: var(--chrome-accent);
+  --accent-dim: var(--chrome-accent-dim);
+  --bg-3: var(--chrome-active);
+  --good: var(--chrome-good);
+  --warn: var(--chrome-warn);
+  --bad: var(--chrome-bad);
 }
 
 * {
@@ -31,7 +294,7 @@ body {
   background: var(--bg-0);
   color: var(--text-0);
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: var(--font-size);
   overflow: hidden;
   user-select: none;
 }
@@ -45,12 +308,23 @@ textarea {
 }
 
 input,
+select,
+textarea {
+  box-shadow: var(--field-shadow);
+}
+
+input,
 textarea {
   user-select: text;
 }
 
 button {
   cursor: pointer;
+  box-shadow: var(--button-shadow);
+}
+
+button:active:not(:disabled) {
+  box-shadow: var(--button-shadow-pressed);
 }
 
 button:disabled,
@@ -59,14 +333,24 @@ select:disabled {
   cursor: not-allowed;
 }
 
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+:root[data-theme='contrast'] :focus-visible {
+  outline-width: 3px;
+  outline-offset: 2px;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-3);
-  border-radius: 4px;
+  background: var(--scroll-thumb);
+  border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar-track {

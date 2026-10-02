@@ -28,8 +28,8 @@ export default function TuneSlider({
     <div style={{ display: 'grid', gridTemplateColumns: '112px 1fr 84px 22px', alignItems: 'center', gap: 10 }} title={spec.hint}>
       <span style={{ fontSize: 12, color: changed ? 'var(--warn)' : 'var(--text-1)' }}>{spec.label}</span>
       <div style={{ position: 'relative', height: 22, display: 'flex', alignItems: 'center' }}>
-        <div style={{ position: 'absolute', left: 0, right: 0, height: 4, borderRadius: 2, background: 'var(--bg-3)' }} />
-        <div style={{ position: 'absolute', left: 0, width: `${pct(value)}%`, height: 4, borderRadius: 2, background: changed ? 'var(--warn)' : color, opacity: 0.85 }} />
+        <div style={{ position: 'absolute', left: 0, right: 0, height: 4, borderRadius: 'var(--radius-xs)', background: 'var(--bg-3)' }} />
+        <div style={{ position: 'absolute', left: 0, width: `${pct(value)}%`, height: 4, borderRadius: 'var(--radius-xs)', background: changed ? 'var(--warn)' : color, opacity: 0.85 }} />
         <div
           title={`On vehicle: ${vehicle}`}
           style={{ position: 'absolute', left: `${pct(vehicle)}%`, top: 1, bottom: 1, width: 2, marginLeft: -1, background: 'var(--text-0)', opacity: 0.7, pointerEvents: 'none' }}
@@ -52,7 +52,7 @@ export default function TuneSlider({
         title="Back to the vehicle's value"
         disabled={!changed}
         onClick={() => draft.revert([spec.id])}
-        style={{ width: 22, height: 22, padding: 0, borderRadius: 4, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-1)', fontSize: 12 }}
+        style={{ width: 22, height: 22, padding: 0, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-1)', fontSize: 12 }}
       >
         ↺
       </button>

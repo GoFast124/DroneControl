@@ -67,7 +67,7 @@ export default function ConnectionModal({ onClose }: { onClose: () => void }): R
           width: 420,
           background: 'var(--bg-1)',
           border: '1px solid var(--border)',
-          borderRadius: 10,
+          borderRadius: 'var(--radius-xl)',
           padding: 20
         }}
       >
@@ -195,7 +195,7 @@ function TabButton({
       style={{
         flex: 1,
         padding: '8px 0',
-        borderRadius: 6,
+        borderRadius: 'var(--radius-md)',
         border: '1px solid ' + (active ? 'var(--accent)' : 'var(--border)'),
         background: active ? 'var(--accent-dim)' : 'transparent',
         color: active ? 'var(--accent)' : 'var(--text-1)'
@@ -218,7 +218,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const inputStyle: React.CSSProperties = {
   background: 'var(--bg-2)',
   border: '1px solid var(--border)',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   padding: '8px 10px',
   color: 'var(--text-0)'
 }
@@ -227,7 +227,7 @@ const selectStyle: React.CSSProperties = { ...inputStyle }
 
 const primaryBtn: React.CSSProperties = {
   padding: '8px 18px',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   border: '1px solid var(--accent)',
   background: 'var(--accent-dim)',
   color: 'var(--accent)',
@@ -236,7 +236,7 @@ const primaryBtn: React.CSSProperties = {
 
 const secondaryBtn: React.CSSProperties = {
   padding: '8px 18px',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   border: '1px solid var(--border)',
   background: 'transparent',
   color: 'var(--text-1)'

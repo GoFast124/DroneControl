@@ -123,7 +123,7 @@ export default function LiveResponse({ draft }: { draft: Draft }): React.JSX.Ele
         </button>
       </div>
 
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ maxWidth: '100%', background: 'var(--bg-1)', borderRadius: 6, border: '1px solid var(--border)' }}>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ maxWidth: '100%', background: 'var(--bg-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
         {[-1, -0.5, 0, 0.5, 1].map((f) => (
           <g key={f}>
             <line x1={PAD.l} x2={W - PAD.r} y1={py(f * extent)} y2={py(f * extent)} stroke={f === 0 ? 'var(--text-2)' : 'var(--border)'} strokeDasharray={f === 0 ? '' : '3 4'} />
@@ -186,7 +186,7 @@ export default function LiveResponse({ draft }: { draft: Draft }): React.JSX.Ele
                 <span>{name} term</span>
                 <span style={{ fontFamily: 'var(--mono)' }}>{v.toFixed(3)}</span>
               </div>
-              <div style={{ position: 'relative', height: 6, background: 'var(--bg-3)', borderRadius: 3 }}>
+              <div style={{ position: 'relative', height: 6, background: 'var(--bg-3)', borderRadius: 'var(--radius-xs)' }}>
                 <div
                   style={{
                     position: 'absolute',
@@ -195,7 +195,7 @@ export default function LiveResponse({ draft }: { draft: Draft }): React.JSX.Ele
                     left: v >= 0 ? '50%' : `${50 + Math.max(-50, v * 100)}%`,
                     width: `${Math.min(50, Math.abs(v) * 100)}%`,
                     background: spec.color,
-                    borderRadius: 3
+                    borderRadius: 'var(--radius-xs)'
                   }}
                 />
                 <div style={{ position: 'absolute', left: '50%', top: -1, bottom: -1, width: 1, background: 'var(--text-2)' }} />
@@ -211,7 +211,7 @@ export default function LiveResponse({ draft }: { draft: Draft }): React.JSX.Ele
 function chip(active: boolean, color = 'var(--accent)'): React.CSSProperties {
   return {
     padding: '4px 12px',
-    borderRadius: 14,
+    borderRadius: 'var(--radius-pill)',
     border: `1px solid ${active ? color : 'var(--border)'}`,
     background: active ? 'var(--bg-3)' : 'transparent',
     color: active ? color : 'var(--text-1)'

@@ -2,7 +2,7 @@ import { useTelemetry } from '../store'
 import { useTrafficCentre } from '../trafficCentre'
 import {
   ONLINE_TRAFFIC_KEY,
-  THREAT_COLORS,
+  THREAT_TEXT_COLORS,
   TRAFFIC_RANGES_KM,
   aircraftName,
   compassPoint,
@@ -35,7 +35,7 @@ export default function TrafficCard(): React.JSX.Element {
   }
 
   return (
-    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 12, width: 290 }}>
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 12, width: 290 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: 'var(--text-2)', letterSpacing: 0.5 }}>
           TRAFFIC WITHIN
@@ -43,7 +43,7 @@ export default function TrafficCard(): React.JSX.Element {
             value={rangeKm}
             onChange={(e) => setTrafficRangeKm(Number(e.target.value))}
             title="How far out to show aircraft"
-            style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 4px', color: 'var(--text-0)', fontSize: 11 }}
+            style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '2px 4px', color: 'var(--text-0)', fontSize: 11 }}
           >
             {TRAFFIC_RANGES_KM.map((km) => (
               <option key={km} value={km}>
@@ -72,7 +72,7 @@ export default function TrafficCard(): React.JSX.Element {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
           {nearby.slice(0, LIST_LENGTH).map((a) => {
-            const color = THREAT_COLORS[a.threat]
+            const color = THREAT_TEXT_COLORS[a.threat]
             return (
               <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span

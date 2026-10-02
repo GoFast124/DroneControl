@@ -302,7 +302,7 @@ function Row({
       style={{
         background: 'var(--bg-2)',
         border: `1px solid ${selected ? 'var(--accent)' : current ? 'var(--good)' : 'var(--border)'}`,
-        borderRadius: 8,
+        borderRadius: 'var(--radius-lg)',
         padding: 8,
         display: 'flex',
         flexDirection: 'column',
@@ -314,12 +314,12 @@ function Row({
           style={{
             minWidth: 26,
             textAlign: 'center',
-            borderRadius: 10,
+            borderRadius: 'var(--radius-xl)',
             padding: '2px 6px',
             fontWeight: 700,
             fontSize: 12,
             background: current ? 'var(--good)' : 'var(--bg-3)',
-            color: current ? '#06210f' : 'var(--text-0)'
+            color: current ? 'var(--bg-0)' : 'var(--text-0)'
           }}
         >
           {index + 1}
@@ -327,7 +327,7 @@ function Row({
         <select
           value={item.command}
           onChange={(e) => changeCommand(Number(e.target.value))}
-          style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 4, padding: '4px 6px', color: 'var(--text-0)' }}
+          style={{ flex: 1, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 6px', color: 'var(--text-0)' }}
         >
           {!MISSION_COMMANDS.some((c) => c.id === item.command) && <option value={item.command}>{info.name}</option>}
           {MISSION_COMMANDS.map((c) => (
@@ -367,7 +367,7 @@ function Row({
             value={item.frame}
             onChange={(e) => missionActions.updateItem(index, { frame: Number(e.target.value) })}
             title="Altitude reference"
-            style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 4, padding: '4px 4px', color: 'var(--text-1)', fontSize: 11 }}
+            style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 4px', color: 'var(--text-1)', fontSize: 11 }}
           >
             <option value={FRAME_RELATIVE}>Rel home</option>
             <option value={FRAME_ABSOLUTE}>Abs MSL</option>
@@ -424,7 +424,7 @@ function IconButton({
         e.stopPropagation()
         onClick()
       }}
-      style={{ width: 26, height: 26, borderRadius: 4, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-1)', padding: 0 }}
+      style={{ width: 26, height: 26, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-1)', padding: 0 }}
     >
       {children}
     </button>
@@ -437,9 +437,9 @@ function MapButton({ children, onClick, active }: { children: React.ReactNode; o
       onClick={onClick}
       style={{
         padding: '7px 12px',
-        borderRadius: 6,
+        borderRadius: 'var(--radius-md)',
         border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
-        background: active ? 'var(--accent-dim)' : 'rgba(10,14,20,0.85)',
+        background: active ? 'var(--accent-dim)' : 'var(--overlay-bg)',
         color: active ? 'var(--accent)' : 'var(--text-0)',
         fontWeight: 600
       }}
@@ -451,7 +451,7 @@ function MapButton({ children, onClick, active }: { children: React.ReactNode; o
 
 const btn: React.CSSProperties = {
   padding: '7px 12px',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   border: '1px solid var(--border)',
   background: 'transparent',
   color: 'var(--text-0)'

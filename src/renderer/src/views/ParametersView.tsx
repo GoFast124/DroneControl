@@ -248,7 +248,7 @@ export default function ParametersView(): React.JSX.Element {
       )}
 
       {loading && (
-        <div style={{ height: 4, background: 'var(--bg-3)', borderRadius: 2, overflow: 'hidden' }}>
+        <div style={{ height: 4, background: 'var(--bg-3)', borderRadius: 'var(--radius-xs)', overflow: 'hidden' }}>
           <div
             style={{
               height: '100%',
@@ -271,7 +271,7 @@ export default function ParametersView(): React.JSX.Element {
             resize: 'none',
             background: 'var(--bg-2)',
             border: '1px solid var(--border)',
-            borderRadius: 8,
+            borderRadius: 'var(--radius-lg)',
             padding: 12,
             color: 'var(--text-0)',
             fontFamily: 'var(--mono)',
@@ -280,7 +280,7 @@ export default function ParametersView(): React.JSX.Element {
           }}
         />
       ) : (
-        <div style={{ flex: 1, overflow: 'auto', border: '1px solid var(--border)', borderRadius: 8 }}>
+        <div style={{ flex: 1, overflow: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ position: 'sticky', top: 0, background: 'var(--bg-2)', zIndex: 1 }}>
@@ -451,7 +451,7 @@ function ModeButton({
       style={{
         padding: '8px 16px',
         border: '1px solid ' + (active ? 'var(--accent)' : 'var(--border)'),
-        borderRadius: left ? '6px 0 0 6px' : '0 6px 6px 0',
+        borderRadius: left ? 'var(--radius-md) 0 0 var(--radius-md)' : '0 var(--radius-md) var(--radius-md) 0',
         background: active ? 'var(--accent-dim)' : 'transparent',
         color: active ? 'var(--accent)' : 'var(--text-1)'
       }}
@@ -481,14 +481,14 @@ function Th({ children }: { children?: React.ReactNode }): React.JSX.Element {
 const inputStyle: React.CSSProperties = {
   background: 'var(--bg-2)',
   border: '1px solid var(--border)',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   padding: '8px 10px',
   color: 'var(--text-0)'
 }
 
 const secondaryBtn: React.CSSProperties = {
   padding: '8px 14px',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   border: '1px solid var(--border)',
   background: 'transparent',
   color: 'var(--text-1)'
@@ -496,7 +496,7 @@ const secondaryBtn: React.CSSProperties = {
 
 const primaryBtn: React.CSSProperties = {
   padding: '8px 16px',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   border: '1px solid var(--accent)',
   background: 'var(--accent-dim)',
   color: 'var(--accent)',
@@ -505,7 +505,7 @@ const primaryBtn: React.CSSProperties = {
 
 const saveBtn: React.CSSProperties = {
   padding: '3px 10px',
-  borderRadius: 4,
+  borderRadius: 'var(--radius-sm)',
   border: '1px solid var(--good)',
   background: 'transparent',
   color: 'var(--good)',

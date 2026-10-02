@@ -10,7 +10,7 @@ export default function StatCard({
       style={{
         background: 'var(--bg-2)',
         border: '1px solid var(--border)',
-        borderRadius: 8,
+        borderRadius: 'var(--radius-lg)',
         padding: 12,
         minWidth: 160
       }}

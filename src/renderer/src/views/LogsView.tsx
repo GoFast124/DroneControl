@@ -29,7 +29,7 @@ export default function LogsView(): React.JSX.Element {
             maxWidth: 320,
             background: 'var(--bg-2)',
             border: '1px solid var(--border)',
-            borderRadius: 6,
+            borderRadius: 'var(--radius-md)',
             padding: '8px 10px',
             color: 'var(--text-0)'
           }}
@@ -50,7 +50,7 @@ export default function LogsView(): React.JSX.Element {
           flex: 1,
           overflow: 'auto',
           border: '1px solid var(--border)',
-          borderRadius: 8,
+          borderRadius: 'var(--radius-lg)',
           fontFamily: 'var(--mono)',
           fontSize: 11
         }}

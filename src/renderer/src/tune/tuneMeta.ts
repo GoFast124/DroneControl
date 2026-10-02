@@ -21,9 +21,9 @@ export interface AxisSpec {
 }
 
 export const AXES: AxisSpec[] = [
-  { key: 'roll', label: 'Roll', color: '#3ecfff', prefix: 'ATC_RAT_RLL_', angleP: 'ATC_ANG_RLL_P', pidAxis: 1 },
-  { key: 'pitch', label: 'Pitch', color: '#f5b942', prefix: 'ATC_RAT_PIT_', angleP: 'ATC_ANG_PIT_P', pidAxis: 2 },
-  { key: 'yaw', label: 'Yaw', color: '#33d17a', prefix: 'ATC_RAT_YAW_', angleP: 'ATC_ANG_YAW_P', pidAxis: 3 }
+  { key: 'roll', label: 'Roll', color: 'var(--series-roll)', prefix: 'ATC_RAT_RLL_', angleP: 'ATC_ANG_RLL_P', pidAxis: 1 },
+  { key: 'pitch', label: 'Pitch', color: 'var(--series-pitch)', prefix: 'ATC_RAT_PIT_', angleP: 'ATC_ANG_PIT_P', pidAxis: 2 },
+  { key: 'yaw', label: 'Yaw', color: 'var(--series-yaw)', prefix: 'ATC_RAT_YAW_', angleP: 'ATC_ANG_YAW_P', pidAxis: 3 }
 ]
 
 export function ratePidSpecs(axis: AxisSpec): SliderSpec[] {

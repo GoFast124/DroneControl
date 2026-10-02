@@ -1,4 +1,5 @@
 import { useConnection, useTelemetry } from '../store'
+import { THEMES, isThemeId, setTheme, useTheme } from '../themes'
 
 const STATUS_COLOR: Record<string, string> = {
   disconnected: 'var(--text-2)',
@@ -11,6 +12,7 @@ export default function TopBar({ onOpenConnection }: { onOpenConnection: () => v
   const connection = useConnection()
   const telemetry = useTelemetry()
   const connected = connection.status === 'connected'
+  const theme = useTheme()
 
   async function handleClick(): Promise<void> {
     if (connected) {
@@ -22,10 +24,11 @@ export default function TopBar({ onOpenConnection }: { onOpenConnection: () => v
 
   return (
     <div
+      className="chrome-bar"
       style={{
         height: 48,
         borderBottom: '1px solid var(--border)',
-        background: 'var(--bg-1)',
+        background: 'var(--topbar-bg)',
         display: 'flex',
         alignItems: 'center',
         padding: '0 16px',
@@ -63,11 +66,29 @@ export default function TopBar({ onOpenConnection }: { onOpenConnection: () => v
 
       <div style={{ flex: 1 }} />
 
+      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-1)' }}>
+        Theme
+        <select
+          value={theme}
+          onChange={(e) => {
+            if (isThemeId(e.target.value)) setTheme(e.target.value)
+          }}
+          title="Colour theme"
+          style={{ background: 'var(--chrome-field-bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 6px', color: 'var(--text-0)' }}
+        >
+          {THEMES.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
       <button
         onClick={handleClick}
         style={{
           padding: '6px 16px',
-          borderRadius: 6,
+          borderRadius: 'var(--radius-md)',
           border: '1px solid ' + (connected ? 'var(--bad)' : 'var(--accent)'),
           background: 'transparent',
           color: connected ? 'var(--bad)' : 'var(--accent)',
