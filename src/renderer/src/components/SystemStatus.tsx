@@ -27,7 +27,7 @@ export default function SystemStatus(): React.JSX.Element {
   const summary = summarize(indicators)
 
   return (
-    <div style={{ width: '100%', maxWidth: 1100, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 8, padding: 12 }}>
+    <div style={{ width: '100%', maxWidth: 1100, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: open ? 10 : 0 }}>
         <span style={{ fontSize: 10, color: 'var(--text-2)', letterSpacing: 0.5 }}>SYSTEM STATUS</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: LEVEL_COLOR[summary.level] }}>
@@ -36,7 +36,7 @@ export default function SystemStatus(): React.JSX.Element {
         </span>
         <button
           onClick={() => setOpen(!open)}
-          style={{ marginLeft: 'auto', background: 'transparent', border: '1px solid var(--border)', borderRadius: 4, padding: '2px 8px', color: 'var(--text-1)', fontSize: 11 }}
+          style={{ marginLeft: 'auto', background: 'transparent', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--text-1)', fontSize: 11 }}
         >
           {open ? 'Collapse' : 'Show'}
         </button>
@@ -54,7 +54,7 @@ export default function SystemStatus(): React.JSX.Element {
                 padding: '8px 10px',
                 background: 'var(--bg-1)',
                 border: `1px solid ${i.level === 'bad' ? 'var(--bad)' : i.level === 'warn' ? 'var(--accent-dim)' : 'var(--border)'}`,
-                borderRadius: 6,
+                borderRadius: 'var(--radius-md)',
                 minWidth: 0
               }}
             >

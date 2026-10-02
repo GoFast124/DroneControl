@@ -224,7 +224,7 @@ export default function ProximityRadar({ onHide }: { onHide: () => void }): Reac
           value={rangeSetting}
           onChange={(e) => setRangeSetting(e.target.value === 'auto' ? 'auto' : Number(e.target.value))}
           title="Radar range"
-          style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 6px', color: 'var(--text-0)' }}
+          style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', color: 'var(--text-0)' }}
         >
           <option value="auto">Range: auto ({autoRange} m)</option>
           {RANGE_STEPS.map((n) => (
@@ -236,7 +236,7 @@ export default function ProximityRadar({ onHide }: { onHide: () => void }): Reac
         <button
           onClick={onHide}
           title="Hide the proximity radar"
-          style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', color: 'var(--text-1)' }}
+          style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '3px 8px', color: 'var(--text-1)' }}
         >
           Hide
         </button>

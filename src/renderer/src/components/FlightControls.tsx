@@ -51,7 +51,7 @@ export default function FlightControls(): React.JSX.Element {
         flexShrink: 0,
         background: 'var(--bg-2)',
         border: '1px solid var(--border)',
-        borderRadius: 8,
+        borderRadius: 'var(--radius-lg)',
         padding: 12,
         display: 'flex',
         flexDirection: 'column',
@@ -129,14 +129,14 @@ export default function FlightControls(): React.JSX.Element {
 const fieldStyle: React.CSSProperties = {
   background: 'var(--bg-1)',
   border: '1px solid var(--border)',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   padding: '7px 10px',
   color: 'var(--text-0)'
 }
 
 const btn: React.CSSProperties = {
   padding: '8px 12px',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)',
   border: '1px solid var(--border)',
   background: 'transparent',
   color: 'var(--text-0)',

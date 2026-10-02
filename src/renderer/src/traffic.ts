@@ -65,6 +65,14 @@ export interface NearbyAircraft extends Aircraft {
   threat: Threat
 }
 
+// The same levels for text on the dashboard card, where white would vanish on a light theme.
+export const THREAT_TEXT_COLORS: Record<Threat, string> = {
+  none: 'var(--text-1)',
+  caution: 'var(--warn)',
+  alert: 'var(--bad)'
+}
+
+// For marking aircraft on the map, which is always satellite imagery.
 export const THREAT_COLORS: Record<Threat, string> = {
   none: '#ffffff',
   caution: '#f5b942',

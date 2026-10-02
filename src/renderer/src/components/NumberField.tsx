@@ -34,7 +34,7 @@ export default function NumberField({
         width,
         background: 'var(--bg-1)',
         border: '1px solid var(--border)',
-        borderRadius: 4,
+        borderRadius: 'var(--radius-sm)',
         padding: '4px 6px',
         color: 'var(--text-0)',
         fontFamily: 'var(--mono)',

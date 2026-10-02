@@ -53,18 +53,18 @@ export default function RateCurves({ draft }: { draft: Draft }): React.JSX.Eleme
 
       {rpRate !== undefined && (
         <>
-          <path d={curve(rpRate, rpExpo, 5)} fill="none" stroke="#3ecfff" strokeWidth={2.5} />
-          <circle cx={px(1)} cy={py(rpRate)} r={4} fill="#3ecfff" />
-          <text x={px(1) - 8} y={py(rpRate) - 10} fontSize={11} fill="#3ecfff" textAnchor="end" fontFamily="var(--mono)" fontWeight={700}>
+          <path d={curve(rpRate, rpExpo, 5)} fill="none" stroke="var(--series-roll)" strokeWidth={2.5} />
+          <circle cx={px(1)} cy={py(rpRate)} r={4} fill="var(--series-roll)" />
+          <text x={px(1) - 8} y={py(rpRate) - 10} fontSize={11} fill="var(--series-roll)" textAnchor="end" fontFamily="var(--mono)" fontWeight={700}>
             roll/pitch {Math.round(rpRate)}°/s
           </text>
         </>
       )}
       {yRate !== undefined && (
         <>
-          <path d={curve(yRate, yExpo, 3)} fill="none" stroke="#33d17a" strokeWidth={2.5} />
-          <circle cx={px(1)} cy={py(yRate)} r={4} fill="#33d17a" />
-          <text x={px(1) - 8} y={py(yRate) + 26} fontSize={11} fill="#33d17a" textAnchor="end" fontFamily="var(--mono)" fontWeight={700}>
+          <path d={curve(yRate, yExpo, 3)} fill="none" stroke="var(--series-yaw)" strokeWidth={2.5} />
+          <circle cx={px(1)} cy={py(yRate)} r={4} fill="var(--series-yaw)" />
+          <text x={px(1) - 8} y={py(yRate) + 26} fontSize={11} fill="var(--series-yaw)" textAnchor="end" fontFamily="var(--mono)" fontWeight={700}>
             yaw {Math.round(yRate)}°/s
           </text>
         </>

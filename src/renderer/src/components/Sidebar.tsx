@@ -18,9 +18,10 @@ export default function Sidebar({
 }): React.JSX.Element {
   return (
     <div
+      className="chrome-bar"
       style={{
         width: 76,
-        background: 'var(--bg-1)',
+        background: 'var(--sidebar-bg)',
         borderRight: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
@@ -34,7 +35,7 @@ export default function Sidebar({
         style={{
           width: 36,
           height: 36,
-          borderRadius: 8,
+          borderRadius: 'var(--radius-lg)',
           background: 'var(--accent-dim)',
           color: 'var(--accent)',
           display: 'flex',
@@ -60,7 +61,7 @@ export default function Sidebar({
               alignItems: 'center',
               gap: 4,
               padding: '10px 0',
-              borderRadius: 8,
+              borderRadius: 'var(--radius-lg)',
               border: 'none',
               background: active ? 'var(--bg-3)' : 'transparent',
               color: active ? 'var(--accent)' : 'var(--text-1)'

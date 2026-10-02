@@ -40,7 +40,7 @@ export default function SetupView(): React.JSX.Element {
           <div style={{ marginTop: 12 }}>
             <button
               onClick={() => void window.api.requestParams()}
-              style={{ padding: '7px 14px', borderRadius: 6, border: '1px solid var(--accent)', background: 'var(--accent-dim)', color: 'var(--accent)' }}
+              style={{ padding: '7px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent)', background: 'var(--accent-dim)', color: 'var(--accent)' }}
             >
               Load parameters
             </button>
@@ -60,7 +60,7 @@ export default function SetupView(): React.JSX.Element {
             style={{
               textAlign: 'left',
               padding: '9px 12px',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-md)',
               border: 'none',
               background: tab === t.id ? 'var(--bg-3)' : 'transparent',
               color: tab === t.id ? 'var(--accent)' : 'var(--text-1)'

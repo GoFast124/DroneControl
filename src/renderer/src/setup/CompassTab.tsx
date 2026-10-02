@@ -123,7 +123,7 @@ export default function CompassTab({ draft }: { draft: Draft }): React.JSX.Eleme
           <div key={id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ width: 80 }}>Compass {id + 1}</span>
-              <div style={{ flex: 1, height: 10, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 5, overflow: 'hidden' }}>
+              <div style={{ flex: 1, height: 10, background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
                 <div style={{ width: `${s.report ? 100 : s.percent}%`, height: '100%', background: s.report && s.report.status !== 4 ? 'var(--bad)' : 'var(--accent)' }} />
               </div>
               <span style={{ width: 40, textAlign: 'right', fontFamily: 'var(--mono)' }}>{s.report ? 100 : s.percent}%</span>
@@ -154,7 +154,7 @@ function Coverage({ mask }: { mask: number[] }): React.JSX.Element {
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(40, 1fr)', gap: 2 }} title="Sphere coverage">
       {Array.from({ length: 80 }, (_, i) => {
         const set = ((mask[i >> 3] ?? 0) >> (i & 7)) & 1
-        return <div key={i} style={{ height: 8, borderRadius: 2, background: set ? 'var(--good)' : 'var(--bg-3)' }} />
+        return <div key={i} style={{ height: 8, borderRadius: 'var(--radius-xs)', background: set ? 'var(--good)' : 'var(--bg-3)' }} />
       })}
     </div>
   )

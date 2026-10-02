@@ -33,7 +33,7 @@ export default function MessagesPanel(): React.JSX.Element {
         flexDirection: 'column',
         background: 'var(--bg-2)',
         border: '1px solid var(--border)',
-        borderRadius: 8,
+        borderRadius: 'var(--radius-lg)',
         overflow: 'hidden'
       }}
     >

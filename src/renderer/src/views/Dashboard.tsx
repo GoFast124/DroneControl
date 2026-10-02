@@ -135,7 +135,7 @@ function ShowButton({ onClick, children }: { onClick: () => void; children: Reac
   return (
     <button
       onClick={onClick}
-      style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-1)' }}
+      style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-1)' }}
     >
       {children}
     </button>

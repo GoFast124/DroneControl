@@ -1,7 +1,7 @@
 import type { FrameMotor } from './frames'
 
-const CW_COLOR = '#3ecfff'
-const CCW_COLOR = '#f5b942'
+const CW_COLOR = 'var(--cw)'
+const CCW_COLOR = 'var(--ccw)'
 const NONE_COLOR = 'var(--text-2)'
 
 // Top-down view of a frame: nose up, motors at their arm positions, numbered by output with the motor-test letter,
